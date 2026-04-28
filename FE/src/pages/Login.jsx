@@ -1,40 +1,30 @@
 import { useState } from 'react';
-import { GraduationCap, User, Lock, ArrowRight, ShieldCheck } from 'lucide-react';
-import { students } from '../data/mockData';
+import { GraduationCap, User, Lock, ArrowRight, Info } from 'lucide-react';
+import { api } from '../utils/api';
 
 export function Login({ onLogin }) {
-    const [role, setRole] = useState('teacher'); // 'admin' | 'teacher' | 'student'
     const [id, setId] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
-        const trimmedId = id.trim();
-        const trimmedPass = password.trim();
+        setLoading(true);
 
-        console.log(`Login: Attempting login as ${role} with ID: "${trimmedId}"`);
-
-        if (role === 'admin') {
-            if (trimmedId === 'admin' && trimmedPass === 'admin') {
-                onLogin({ role: 'admin', id: 'admin', name: 'Quản trị viên' });
-            } else {
-                setError('Sai thông tin Admin (admin/admin)');
-            }
-        } else if (role === 'teacher') {
-            if (trimmedId === 'teacher' && trimmedPass === 'teacher') {
-                onLogin({ role: 'teacher', id: 'teacher', name: 'Nguyễn Văn Thầy' });
-            } else {
-                setError('Sai thông tin Giáo viên (teacher/teacher)');
-            }
-        } else {
-            const student = students.find(s => s.id === trimmedId);
-            if (student) {
-                onLogin({ role: 'student', id: student.id, name: student.name, class: student.class });
-            } else {
-                setError('Mã học sinh không tồn tại');
-            }
+        try {
+            const data = await api.post('/auth/login', {
+                username: id.trim(),
+                password: password.trim()
+            });
+            
+            // Backend returns: { token, tokenType, id, username, name, role, email }
+            onLogin(data);
+        } catch (err) {
+            setError(err.message || 'Tài khoản hoặc mật khẩu không chính xác.');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -55,39 +45,15 @@ export function Login({ onLogin }) {
                     <p className="text-gray-500 text-sm mt-1">Hệ thống điểm danh thông minh</p>
                 </div>
 
-                {/* Role Selector */}
-                <div className="flex p-1 bg-gray-100 rounded-xl mx-6 mt-4">
-                    <button
-                        onClick={() => { setRole('admin'); setError(''); }}
-                        className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-bold transition-all ${role === 'admin' ? 'bg-white shadow-sm text-indigo-600 border border-indigo-100' : 'text-gray-500 hover:text-gray-700'}`}
-                    >
-                        <ShieldCheck size={14} /> Admin
-                    </button>
-                    <button
-                        onClick={() => { setRole('teacher'); setError(''); }}
-                        className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-bold transition-all ${role === 'teacher' ? 'bg-white shadow-sm text-indigo-600 border border-indigo-100' : 'text-gray-500 hover:text-gray-700'}`}
-                    >
-                        <GraduationCap size={14} /> G.Viên
-                    </button>
-                    <button
-                        onClick={() => { setRole('student'); setError(''); }}
-                        className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-bold transition-all ${role === 'student' ? 'bg-white shadow-sm text-indigo-600 border border-indigo-100' : 'text-gray-500 hover:text-gray-700'}`}
-                    >
-                        <User size={14} /> H.Sinh
-                    </button>
-                </div>
-
                 <form onSubmit={handleSubmit} className="p-8 pt-6 space-y-4">
                     <div className="space-y-1.5">
-                        <label className="text-sm font-medium text-gray-700 ml-1">
-                            {role === 'student' ? 'Mã học sinh' : 'Tên đăng nhập'}
-                        </label>
+                        <label className="text-sm font-medium text-gray-700 ml-1">Tên đăng nhập / Mã học sinh</label>
                         <div className="relative group">
                             <User size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
                             <input
                                 type="text"
-                                className="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 pl-10 pr-4 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
-                                placeholder={role === 'admin' ? 'admin' : role === 'teacher' ? 'teacher' : 'Ví dụ: HS001'}
+                                className="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 pl-10 pr-4 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium"
+                                placeholder="Tên đăng nhập hoặc Mã HS..."
                                 value={id}
                                 onChange={e => setId(e.target.value)}
                                 required
@@ -110,6 +76,16 @@ export function Login({ onLogin }) {
                         </div>
                     </div>
 
+                    <div className="bg-indigo-50 text-indigo-600 text-[10px] p-3 rounded-xl border border-indigo-100 flex items-start gap-2">
+                        <Info size={14} className="mt-0.5 shrink-0" />
+                        <div className="space-y-1">
+                            <p className="font-bold uppercase tracking-wider">Hướng dẫn đăng nhập:</p>
+                            <p>• Admin: <span className="font-mono font-bold">admin/admin</span></p>
+                            <p>• Giáo viên: <span className="font-mono font-bold">teacher/teacher</span></p>
+                            <p>• Học sinh: <span className="font-mono font-bold">HS001</span> (Mật khẩu tùy ý)</p>
+                        </div>
+                    </div>
+
                     {error && (
                         <div className="bg-red-50 text-red-600 text-xs p-3 rounded-lg border border-red-100 animate-fade-in flex items-center gap-2">
                             <div className="w-1 h-1 bg-red-600 rounded-full" />
@@ -119,19 +95,20 @@ export function Login({ onLogin }) {
 
                     <button
                         type="submit"
-                        className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-xl shadow-lg shadow-indigo-200 transition-all active:scale-[0.98] flex items-center justify-center gap-2 group mt-6"
+                        disabled={loading}
+                        className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-xl shadow-lg shadow-indigo-200 transition-all active:scale-[0.98] flex items-center justify-center gap-2 group mt-6 disabled:opacity-70 disabled:cursor-not-allowed"
                     >
-                        Đăng nhập
-                        <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                        {loading ? 'Đang xử lý...' : 'Đăng nhập hệ thống'}
+                        {!loading && <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />}
                     </button>
 
                     <div className="pt-4 text-center">
-                        <a href="#" className="text-xs text-gray-400 hover:text-indigo-600 transition-colors">Quên mật khẩu? Liên hệ quản trị viên</a>
+                        <a href="#" className="text-xs text-gray-400 hover:text-indigo-600 transition-colors font-medium">Quên mật khẩu? Liên hệ phòng đào tạo</a>
                     </div>
                 </form>
 
                 <div className="bg-gray-50 p-6 text-center border-t border-gray-100">
-                    <p className="text-xs text-gray-400">© 2026 Attendance AI System. Phiên bản 1.0.0</p>
+                    <p className="text-xs text-gray-400 font-medium">© 2026 Attendance AI System. Phiên bản 1.0.0</p>
                 </div>
             </div>
         </div>

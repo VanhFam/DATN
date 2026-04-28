@@ -1,5 +1,14 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { RobotoRegular, RobotoBold } from './fonts';
+
+const setupFonts = (doc) => {
+    doc.addFileToVFS('Roboto-Regular.ttf', RobotoRegular);
+    doc.addFileToVFS('Roboto-Bold.ttf', RobotoBold);
+    doc.addFont('Roboto-Regular.ttf', 'Roboto', 'normal');
+    doc.addFont('Roboto-Bold.ttf', 'Roboto', 'bold');
+    doc.setFont('Roboto');
+};
 
 const STATUS_LABEL = {
     present: 'Có mặt',
@@ -19,16 +28,17 @@ const STATUS_LABEL = {
  */
 export function exportAttendancePDF({ className, fromDate, toDate, students, dates, records }) {
     const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+    setupFonts(doc);
 
     // Tiêu đề
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('Roboto', 'bold');
     doc.setFontSize(16);
-    doc.text('BẢNG ĐIỂM DANH HỌC SINH', doc.internal.pageSize.width / 2, 15, { align: 'center' });
+    doc.text('BANG DIEM DANH HOC SINH', doc.internal.pageSize.width / 2, 15, { align: 'center' });
 
     doc.setFontSize(11);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`Lớp: ${className}   |   Từ ngày: ${fromDate}   đến ngày: ${toDate}`, doc.internal.pageSize.width / 2, 22, { align: 'center' });
-    doc.text(`Ngày xuất: ${new Date().toLocaleDateString('vi-VN')}`, doc.internal.pageSize.width / 2, 28, { align: 'center' });
+    doc.setFont('Roboto', 'normal');
+    doc.text(`Lop: ${className}   |   Tu ngay: ${fromDate}   den ngay: ${toDate}`, doc.internal.pageSize.width / 2, 22, { align: 'center' });
+    doc.text(`Ngay xuat: ${new Date().toLocaleDateString('vi-VN')}`, doc.internal.pageSize.width / 2, 28, { align: 'center' });
 
     // Bảng tổng hợp
     const summaryHead = [['STT', 'Học sinh', 'Có mặt', 'Vắng', 'Muộn', 'Tỷ lệ (%)']];
@@ -46,7 +56,7 @@ export function exportAttendancePDF({ className, fromDate, toDate, students, dat
         startY: 34,
         head: summaryHead,
         body: summaryBody,
-        styles: { font: 'helvetica', fontSize: 9, cellPadding: 2 },
+        styles: { font: 'Roboto', fontSize: 9, cellPadding: 2 },
         headStyles: { fillColor: [63, 81, 181], textColor: 255, fontStyle: 'bold' },
         alternateRowStyles: { fillColor: [240, 240, 255] },
         columnStyles: {
@@ -115,14 +125,15 @@ export function exportAttendancePDF({ className, fromDate, toDate, students, dat
  */
 export function exportStudentListPDF(students) {
     const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    setupFonts(doc);
 
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('Roboto', 'bold');
     doc.setFontSize(14);
-    doc.text('DANH SÁCH HỌC SINH', doc.internal.pageSize.width / 2, 15, { align: 'center' });
+    doc.text('DANH SACH HOC SINH', doc.internal.pageSize.width / 2, 15, { align: 'center' });
 
-    doc.setFont('helvetica', 'normal');
+    doc.setFont('Roboto', 'normal');
     doc.setFontSize(10);
-    doc.text(`Ngày xuất: ${new Date().toLocaleDateString('vi-VN')}`, doc.internal.pageSize.width / 2, 22, { align: 'center' });
+    doc.text(`Ngay xuat: ${new Date().toLocaleDateString('vi-VN')}`, doc.internal.pageSize.width / 2, 22, { align: 'center' });
 
     autoTable(doc, {
         startY: 28,
@@ -150,13 +161,14 @@ export function exportStudentListPDF(students) {
  */
 export function exportDailyAttendancePDF({ className, date, students, attendanceMap }) {
     const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    setupFonts(doc);
 
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('Roboto', 'bold');
     doc.setFontSize(14);
     doc.text('BAO CAO DIEM DANH NGAY', doc.internal.pageSize.width / 2, 15, { align: 'center' });
 
     doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
+    doc.setFont('Roboto', 'normal');
     doc.text(`Lop: ${className}   |   Ngay: ${date}`, doc.internal.pageSize.width / 2, 22, { align: 'center' });
 
     const tableBody = students.map((s, i) => [
@@ -190,13 +202,14 @@ export function exportDailyAttendancePDF({ className, date, students, attendance
  */
 export function exportSemesterReportPDF({ className, students, records }) {
     const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    setupFonts(doc);
 
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('Roboto', 'bold');
     doc.setFontSize(14);
     doc.text('BAO CAO TONG HOP HOC KY', doc.internal.pageSize.width / 2, 15, { align: 'center' });
 
     doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
+    doc.setFont('Roboto', 'normal');
     doc.text(`Lop: ${className}   |   Hoc ky: 2 (2025-2026)`, doc.internal.pageSize.width / 2, 22, { align: 'center' });
 
     const tableBody = students.map((s, i) => {
