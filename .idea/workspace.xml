@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="07074fbb-ddbc-4d5a-abe6-844d362f3310" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/FE/src/App.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/FE/src/App.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/FE/src/components/attendance/Attendance.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/FE/src/components/attendance/AttendanceList.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/FE/src/components/attendance/CameraBox.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/FE/src/components/layout/Sidebar.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/FE/src/components/layout/Sidebar.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/FE/src/data/mockData.js" beforeDir="false" afterPath="$PROJECT_DIR$/FE/src/data/mockData.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/FE/src/pages/Attendance.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/FE/src/pages/Attendance.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/FE/src/pages/Dashboard.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/FE/src/pages/Dashboard.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/FE/src/pages/Login.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/FE/src/pages/Login.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/FE/src/pages/Reports.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/FE/src/pages/Reports.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/FE/src/pages/Settings.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/FE/src/pages/Settings.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/FE/src/pages/StudentDashboard.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/FE/src/pages/StudentDashboard.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/FE/src/pages/Students.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/FE/src/pages/Students.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/FE/src/utils/Roboto-Bold.ttf" beforeDir="false" afterPath="$PROJECT_DIR$/FE/src/utils/Roboto-Bold.ttf" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/FE/src/utils/Roboto-Regular.ttf" beforeDir="false" afterPath="$PROJECT_DIR$/FE/src/utils/Roboto-Regular.ttf" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/FE/src/utils/fonts.js" beforeDir="false" afterPath="$PROJECT_DIR$/FE/src/utils/fonts.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/FE/src/utils/pdfExport.js" beforeDir="false" afterPath="$PROJECT_DIR$/FE/src/utils/pdfExport.js" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="KubernetesApiPersistence"><![CDATA[{}]]></component>
+  <component name="KubernetesApiProvider"><![CDATA[{
+  "isMigrated": true
+}]]></component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 3
+}</component>
+  <component name="ProjectId" id="3CHffJg8jDE9ulRe9QDYPGEzD05" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RequestMappingsPanelOrder0": "0",
+    "RequestMappingsPanelOrder1": "1",
+    "RequestMappingsPanelWidth0": "75",
+    "RequestMappingsPanelWidth1": "75",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "Spring Boot.BackendApplication.executor": "Run",
+    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
+    "git-widget-placeholder": "main",
+    "junie.onboarding.icon.badge.shown": "true",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "/Users/macos/Documents/DATN",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "to.speed.mode.migration.done": "true",
+    "vue.rearranger.settings.migration": "true"
+  },
+  "keyToStringList": {
+    "DatabaseDriversLRU": [
+      "mysql_aurora"
+    ]
+  }
+}]]></component>
+  <component name="RunManager">
+    <configuration name="BackendApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+      <module name="backend" />
+      <option name="SPRING_BOOT_MAIN_CLASS" value="com.attendance.backend.BackendApplication" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-jdk-30f59d01ecdd-2fc7cc6b9a17-intellij.indexing.shared.core-IU-253.31033.145" />
+        <option value="bundled-js-predefined-d6986cc7102b-9b0f141eb926-JavaScript-IU-253.31033.145" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="07074fbb-ddbc-4d5a-abe6-844d362f3310" name="Changes" comment="" />
+      <created>1776047518083</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1776047518083</updated>
+      <workItem from="1776047519263" duration="3254000" />
+      <workItem from="1776050787333" duration="1474000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+</project>
