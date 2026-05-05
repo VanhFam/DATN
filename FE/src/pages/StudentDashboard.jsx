@@ -228,3 +228,4 @@ export function StudentDashboard({ student, onLogout }) {
         </div>
     );
 }
+
