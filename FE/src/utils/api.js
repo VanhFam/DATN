@@ -11,76 +11,73 @@ const getAuthHeader = () => {
 export const api = {
     get: async (endpoint) => {
         const response = await fetch(`${BASE_URL}${endpoint}`, {
-            headers: {
-                ...getAuthHeader(),
-            },
+            headers: { ...getAuthHeader() },
         });
+        const text = await response.text().catch(() => '');
         if (!response.ok) {
-            const error = await response.json().catch(() => ({ message: 'Lỗi tải dữ liệu' }));
-            throw new Error(error.message || 'API Error');
+            let msg = 'Lỗi tải dữ liệu';
+            try { if (text) msg = JSON.parse(text).message || msg; } catch (e) { }
+            throw new Error(msg);
         }
-        return response.json();
+        return text ? JSON.parse(text) : null;
     },
 
     post: async (endpoint, data) => {
         const response = await fetch(`${BASE_URL}${endpoint}`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                ...getAuthHeader(),
-            },
+            headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
             body: JSON.stringify(data),
         });
+        const text = await response.text().catch(() => '');
         if (!response.ok) {
-            const error = await response.json().catch(() => ({ message: 'Lỗi gửi dữ liệu' }));
-            throw new Error(error.message || 'API Error');
+            let msg = 'Lỗi gửi dữ liệu';
+            try { if (text) msg = JSON.parse(text).message || msg; } catch (e) { }
+            throw new Error(msg);
         }
-        return response.json();
+        return text ? JSON.parse(text) : null;
     },
 
     put: async (endpoint, data) => {
         const response = await fetch(`${BASE_URL}${endpoint}`, {
             method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                ...getAuthHeader(),
-            },
+            headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
             body: JSON.stringify(data),
         });
+        const text = await response.text().catch(() => '');
         if (!response.ok) {
-            const error = await response.json().catch(() => ({ message: 'Lỗi cập nhật dữ liệu' }));
-            throw new Error(error.message || 'API Error');
+            let msg = 'Lỗi cập nhật dữ liệu';
+            try { if (text) msg = JSON.parse(text).message || msg; } catch (e) { }
+            throw new Error(msg);
         }
-        return response.json();
+        return text ? JSON.parse(text) : null;
     },
 
     delete: async (endpoint) => {
         const response = await fetch(`${BASE_URL}${endpoint}`, {
             method: 'DELETE',
-            headers: {
-                ...getAuthHeader(),
-            },
+            headers: { ...getAuthHeader() },
         });
+        const text = await response.text().catch(() => '');
         if (!response.ok) {
-            const error = await response.json().catch(() => ({ message: 'Lỗi xóa dữ liệu' }));
-            throw new Error(error.message || 'API Error');
+            let msg = 'Lỗi xóa dữ liệu';
+            try { if (text) msg = JSON.parse(text).message || msg; } catch (e) { }
+            throw new Error(msg);
         }
-        return response.status === 204 ? null : response.json();
+        return text ? JSON.parse(text) : null;
     },
 
     patch: async (endpoint, data) => {
         const response = await fetch(`${BASE_URL}${endpoint}`, {
             method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json',
-                ...getAuthHeader(),
-            },
+            headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
             body: data ? JSON.stringify(data) : undefined,
         });
+        const text = await response.text().catch(() => '');
         if (!response.ok) {
-            const error = await response.json().catch(() => ({ message: 'Lỗi cập nhật dữ liệu' }));
-            throw new Error(error.message || 'API Error');
+            let msg = 'Lỗi cập nhật dữ liệu';
+            try { if (text) msg = JSON.parse(text).message || msg; } catch (e) { }
+            throw new Error(msg);
         }
-        return response.json();
+        return text ? JSON.parse(text) : null;
     }
 };

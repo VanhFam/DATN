@@ -4,7 +4,7 @@ import {
     Calendar, CheckCircle, XCircle, Clock,
     Award, TrendingUp, LogOut, User as UserIcon,
     Users, Mail, Phone, Filter, Loader2, AlertTriangle,
-    Lock, Settings, Check, X
+    Lock, Settings, Check, X, MapPin
 } from 'lucide-react';
 
 function StatItem({ label, value, color, icon: Icon }) {
@@ -32,7 +32,7 @@ export function StudentDashboard({ student, onLogout }) {
     // Mặc định xem trong 30 ngày gần nhất
     const [fromDate, setFromDate] = useState(new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0]);
     const [toDate, setToDate] = useState(new Date().toISOString().split('T')[0]);
-    
+
     // Settings & Password Change
     const [showSettings, setShowSettings] = useState(false);
     const [isSavingPassword, setIsSavingPassword] = useState(false);
@@ -102,7 +102,7 @@ export function StudentDashboard({ student, onLogout }) {
             alert('Mật khẩu mới không khớp');
             return;
         }
-        
+
         setIsSavingPassword(true);
         try {
             await api.post('/users/change-password', {
@@ -128,7 +128,7 @@ export function StudentDashboard({ student, onLogout }) {
                 email: profile.email,
                 phone: profile.phone
             });
-            
+
             // Sync localStorage
             const user = JSON.parse(localStorage.getItem('attendance_user'));
             if (user) {
@@ -138,7 +138,7 @@ export function StudentDashboard({ student, onLogout }) {
                 localStorage.setItem('attendance_user', JSON.stringify(user));
                 window.dispatchEvent(new Event('storage'));
             }
-            
+
             alert('Cập nhật hồ sơ thành công');
             setShowSettings(false);
         } catch (error) {
@@ -205,7 +205,7 @@ export function StudentDashboard({ student, onLogout }) {
                         <div className="md:col-span-2">
                             <label className="block text-[10px] font-black text-gray-400 uppercase mb-1.5 ml-1">Tìm hoặc chọn môn học</label>
                             <div className="relative group">
-                                <input 
+                                <input
                                     list="student-subjects-list"
                                     placeholder="Gõ tên hoặc chọn môn học..."
                                     className="input text-sm h-11 pr-10"
@@ -227,7 +227,7 @@ export function StudentDashboard({ student, onLogout }) {
                                     ))}
                                 </datalist>
                                 {selectedClassId !== 'all' && (
-                                    <button 
+                                    <button
                                         onClick={() => setSelectedClassId('all')}
                                         className="absolute right-10 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-500"
                                         title="Xóa lọc"
@@ -250,6 +250,7 @@ export function StudentDashboard({ student, onLogout }) {
                         </div>
                     </div>
                 </div>
+
 
                 {loading ? (
                     <div className="py-20 flex flex-col items-center justify-center text-gray-400">
@@ -345,16 +346,16 @@ export function StudentDashboard({ student, onLogout }) {
                                 <X size={20} />
                             </button>
                         </div>
-                        
+
                         {/* Tabs */}
                         <div className="flex border-b border-gray-100">
-                            <button 
+                            <button
                                 onClick={() => setActiveTab('profile')}
                                 className={`flex-1 py-4 text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'profile' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-400 hover:text-gray-600'}`}
                             >
                                 Hồ sơ
                             </button>
-                            <button 
+                            <button
                                 onClick={() => setActiveTab('password')}
                                 className={`flex-1 py-4 text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'password' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-400 hover:text-gray-600'}`}
                             >
@@ -370,92 +371,92 @@ export function StudentDashboard({ student, onLogout }) {
                                         <p className="text-xs font-bold uppercase tracking-widest">Đang tải thông tin...</p>
                                     </div>
                                 ) : (
-                                <form onSubmit={handleProfileUpdate} className="space-y-4">
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Họ và tên</label>
-                                        <div className="relative">
-                                            <UserIcon size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-                                            <input 
-                                                className="input pl-11 bg-slate-50" 
-                                                value={profile.name}
-                                                onChange={e => setProfile({...profile, name: e.target.value})}
-                                            />
+                                    <form onSubmit={handleProfileUpdate} className="space-y-4">
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Họ và tên</label>
+                                            <div className="relative">
+                                                <UserIcon size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                                                <input
+                                                    className="input pl-11 bg-slate-50"
+                                                    value={profile.name}
+                                                    onChange={e => setProfile({ ...profile, name: e.target.value })}
+                                                />
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Email (Gmail)</label>
-                                        <div className="relative">
-                                            <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-                                            <input 
-                                                type="email"
-                                                className="input pl-11 bg-slate-50" 
-                                                placeholder="example@gmail.com"
-                                                value={profile.email}
-                                                onChange={e => setProfile({...profile, email: e.target.value})}
-                                            />
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Email (Gmail)</label>
+                                            <div className="relative">
+                                                <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                                                <input
+                                                    type="email"
+                                                    className="input pl-11 bg-slate-50"
+                                                    placeholder="example@gmail.com"
+                                                    value={profile.email}
+                                                    onChange={e => setProfile({ ...profile, email: e.target.value })}
+                                                />
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Số điện thoại</label>
-                                        <div className="relative">
-                                            <Phone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-                                            <input 
-                                                className="input pl-11 bg-slate-50" 
-                                                placeholder="0987xxxxxx"
-                                                value={profile.phone}
-                                                onChange={e => setProfile({...profile, phone: e.target.value})}
-                                            />
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Số điện thoại</label>
+                                            <div className="relative">
+                                                <Phone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                                                <input
+                                                    className="input pl-11 bg-slate-50"
+                                                    placeholder="0987xxxxxx"
+                                                    value={profile.phone}
+                                                    onChange={e => setProfile({ ...profile, phone: e.target.value })}
+                                                />
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div className="pt-4">
-                                        <button 
-                                            type="submit"
-                                            disabled={isSavingProfile}
-                                            className="w-full btn-primary justify-center py-3 shadow-lg shadow-indigo-200"
-                                        >
-                                            {isSavingProfile ? <Loader2 size={18} className="animate-spin" /> : <Check size={18} strokeWidth={3} />}
-                                            {isSavingProfile ? 'Đang lưu...' : 'Lưu thông tin'}
-                                        </button>
-                                    </div>
-                                </form>
+                                        <div className="pt-4">
+                                            <button
+                                                type="submit"
+                                                disabled={isSavingProfile}
+                                                className="w-full btn-primary justify-center py-3 shadow-lg shadow-indigo-200"
+                                            >
+                                                {isSavingProfile ? <Loader2 size={18} className="animate-spin" /> : <Check size={18} strokeWidth={3} />}
+                                                {isSavingProfile ? 'Đang lưu...' : 'Lưu thông tin'}
+                                            </button>
+                                        </div>
+                                    </form>
                                 )
                             ) : (
                                 <form onSubmit={handlePasswordChange} className="space-y-4">
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Mật khẩu hiện tại</label>
-                                        <input 
-                                            type="password" 
-                                            className="input bg-slate-50" 
+                                        <input
+                                            type="password"
+                                            className="input bg-slate-50"
                                             placeholder="••••••••"
                                             required
                                             value={passwords.current}
-                                            onChange={e => setPasswords({...passwords, current: e.target.value})}
+                                            onChange={e => setPasswords({ ...passwords, current: e.target.value })}
                                         />
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Mật khẩu mới</label>
-                                        <input 
-                                            type="password" 
-                                            className="input bg-slate-50" 
+                                        <input
+                                            type="password"
+                                            className="input bg-slate-50"
                                             placeholder="••••••••"
                                             required
                                             value={passwords.new}
-                                            onChange={e => setPasswords({...passwords, new: e.target.value})}
+                                            onChange={e => setPasswords({ ...passwords, new: e.target.value })}
                                         />
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Xác nhận mật khẩu</label>
-                                        <input 
-                                            type="password" 
-                                            className="input bg-slate-50" 
+                                        <input
+                                            type="password"
+                                            className="input bg-slate-50"
                                             placeholder="••••••••"
                                             required
                                             value={passwords.confirm}
-                                            onChange={e => setPasswords({...passwords, confirm: e.target.value})}
+                                            onChange={e => setPasswords({ ...passwords, confirm: e.target.value })}
                                         />
                                     </div>
                                     <div className="pt-4">
-                                        <button 
+                                        <button
                                             type="submit"
                                             disabled={isSavingPassword}
                                             className="w-full btn-primary justify-center py-3 shadow-lg shadow-indigo-200"

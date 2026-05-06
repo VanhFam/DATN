@@ -5,23 +5,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="a31cdada-9672-4596-8fed-3875ac7b083d" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/../AI/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/../AI/main.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/attendance/backend/BackendApplication.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/attendance/backend/BackendApplication.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/attendance/backend/controller/UserController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/attendance/backend/controller/UserController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/attendance/backend/service/FaceRecognitionService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/attendance/backend/service/FaceRecognitionService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/attendance/backend/service/UserService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/attendance/backend/service/UserService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../FE/Dockerfile" beforeDir="false" afterPath="$PROJECT_DIR$/../FE/Dockerfile" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/attendance/backend/controller/FaceAttendanceController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/attendance/backend/controller/FaceAttendanceController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/attendance/backend/service/AttendanceService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/attendance/backend/service/AttendanceService.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../FE/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/../FE/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../FE/src/App.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../FE/src/App.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../FE/src/components/layout/Sidebar.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../FE/src/components/layout/Sidebar.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../FE/src/pages/Attendance.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../FE/src/pages/Attendance.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../FE/src/pages/Login.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../FE/src/pages/Login.jsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../FE/src/pages/Settings.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../FE/src/pages/Settings.jsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../FE/src/pages/StudentDashboard.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../FE/src/pages/StudentDashboard.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../FE/src/pages/Students.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../FE/src/pages/Students.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../FE/src/pages/Teachers.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../FE/src/pages/Teachers.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../FE/src/utils/excelExport.js" beforeDir="false" afterPath="$PROJECT_DIR$/../FE/src/utils/excelExport.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

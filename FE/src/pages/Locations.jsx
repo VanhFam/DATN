@@ -1,6 +1,25 @@
 import { useState, useEffect } from 'react';
 import { api } from '../utils/api';
-import { Plus, Search, Edit2, Trash2, MapPin, Navigation, X, Check, Activity } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, MapPin, Navigation, X, Check, Activity, Crosshair } from 'lucide-react';
+import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+
+// Fix Leaflet marker icon issue
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerIconRetina from 'leaflet/dist/images/marker-icon-2x.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+
+let DefaultIcon = L.icon({
+    iconUrl: markerIcon,
+    iconRetinaUrl: markerIconRetina,
+    shadowUrl: markerShadow,
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+});
+L.Marker.prototype.options.icon = DefaultIcon;
 
 export function Locations() {
     const [locationsList, setLocationsList] = useState([]);
@@ -8,7 +27,72 @@ export function Locations() {
     const [showModal, setShowModal] = useState(false);
     const [editingLoc, setEditingLoc] = useState(null);
     const [loading, setLoading] = useState(false);
-    const [formData, setFormData] = useState({ id: '', name: '', address: '', lat: 0, lng: 0, radius: 200, isActive: true });
+    const [formData, setFormData] = useState({ id: '', name: '', address: '', lat: 21.0285, lng: 105.8542, radius: 200, isActive: true });
+    const [mapSearch, setMapSearch] = useState('');
+    const [isSearchingMap, setIsSearchingMap] = useState(false);
+
+    // Component to handle map clicks
+    function LocationPicker() {
+        const map = useMap();
+        useMapEvents({
+            click(e) {
+                setFormData(prev => ({ ...prev, lat: e.latlng.lat, lng: e.latlng.lng }));
+            },
+        });
+        
+        useEffect(() => {
+            map.setView([formData.lat, formData.lng], map.getZoom());
+        }, [formData.lat, formData.lng]);
+        
+        return formData.lat && formData.lng ? (
+            <Marker position={[formData.lat, formData.lng]} />
+        ) : null;
+    }
+
+    const handleMapSearch = async (e) => {
+        if (e) e.preventDefault();
+        if (!mapSearch.trim()) return;
+
+        setIsSearchingMap(true);
+        try {
+            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(mapSearch)}&limit=1`);
+            const data = await res.json();
+            if (data && data.length > 0) {
+                const { lat, lon, display_name } = data[0];
+                setFormData(prev => ({
+                    ...prev,
+                    lat: parseFloat(lat),
+                    lng: parseFloat(lon),
+                    address: display_name // Tự động gợi ý địa chỉ luôn
+                }));
+            } else {
+                alert('Không tìm thấy địa điểm này trên bản đồ');
+            }
+        } catch (err) {
+            console.error('Map search error:', err);
+        } finally {
+            setIsSearchingMap(false);
+        }
+    };
+
+    const getCurrentLocation = () => {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    setFormData(prev => ({
+                        ...prev,
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    }));
+                },
+                (error) => {
+                    alert('Không thể lấy vị trí: ' + error.message);
+                }
+            );
+        } else {
+            alert('Trình duyệt không hỗ trợ Geolocation');
+        }
+    };
 
     useEffect(() => {
         fetchLocations();
@@ -56,10 +140,16 @@ export function Locations() {
     const handleDelete = async (id) => {
         if (confirm('Xóa vị trí này?')) {
             try {
+                // Xóa tạm thời ở UI để người dùng thấy kết quả ngay
+                setLocationsList(prev => prev.filter(l => l.id !== id));
+                
                 await api.delete(`/locations/${id}`);
+                // Sau đó mới fetch lại để đồng bộ hoàn toàn
                 fetchLocations();
             } catch (err) {
                 alert('Lỗi khi xóa: ' + err.message);
+                // Nếu lỗi thì fetch lại để khôi phục UI
+                fetchLocations();
             }
         }
     };
@@ -105,9 +195,21 @@ export function Locations() {
                                         </p>
                                     </div>
                                 </div>
-                                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button onClick={() => openEdit(loc)} className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg"><Edit2 size={16} /></button>
-                                    <button onClick={() => handleDelete(loc.id)} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg"><Trash2 size={16} /></button>
+                                <div className="flex gap-2">
+                                    <button 
+                                        onClick={() => openEdit(loc)} 
+                                        className="p-2.5 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl border border-gray-100 shadow-sm transition-all bg-white"
+                                        title="Chỉnh sửa"
+                                    >
+                                        <Edit2 size={16} />
+                                    </button>
+                                    <button 
+                                        onClick={() => handleDelete(loc.id)} 
+                                        className="p-2.5 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-xl border border-gray-100 shadow-sm transition-all bg-white"
+                                        title="Xóa vị trí"
+                                    >
+                                        <Trash2 size={16} />
+                                    </button>
                                 </div>
                             </div>
 
@@ -141,52 +243,101 @@ export function Locations() {
 
             {showModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-                    <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden">
-                        <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                    <div className="bg-white rounded-3xl w-full max-w-2xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh]">
+                        <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 flex-shrink-0">
                             <h3 className="text-xl font-bold text-gray-800">Cấu hình vị trí điểm danh (GPS)</h3>
                             <button onClick={() => setShowModal(false)} className="hover:bg-white p-2 rounded-xl transition-all shadow-sm"><X /></button>
                         </div>
-                        <form onSubmit={handleSave} className="p-8 space-y-5">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="col-span-2">
-                                    <label className="block text-sm font-bold text-gray-600 mb-2">Mã vị trí (ID)</label>
-                                    <input required placeholder="VD: LOC001" className="input" value={formData.id} onChange={e => setFormData({ ...formData, id: e.target.value })} disabled={!!editingLoc} />
+                        
+                        <div className="overflow-y-auto flex-1 custom-scrollbar">
+                            <form onSubmit={handleSave} className="p-8 space-y-6">
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-bold text-gray-600 mb-2">Tìm địa điểm trên bản đồ</label>
+                                        <div className="flex gap-2 mb-3">
+                                            <div className="relative flex-1">
+                                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                                                <input 
+                                                    placeholder="Nhập địa chỉ để tìm nhanh..." 
+                                                    className="input pl-10 h-11 text-sm bg-slate-50"
+                                                    value={mapSearch}
+                                                    onChange={e => setMapSearch(e.target.value)}
+                                                    onKeyDown={e => e.key === 'Enter' && handleMapSearch(e)}
+                                                />
+                                            </div>
+                                            <button 
+                                                type="button"
+                                                onClick={handleMapSearch}
+                                                disabled={isSearchingMap}
+                                                className="btn-secondary px-6 h-11 flex items-center gap-2 text-sm font-bold"
+                                            >
+                                                {isSearchingMap ? <Activity className="animate-spin" size={16} /> : <Navigation size={16} />}
+                                                Tìm kiếm
+                                            </button>
+                                        </div>
+
+                                        <div className="h-72 rounded-2xl overflow-hidden border border-gray-200 relative shadow-inner">
+                                            <MapContainer center={[formData.lat, formData.lng]} zoom={15} style={{ height: '100%', width: '100%' }}>
+                                                <TileLayer
+                                                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                                                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                                                />
+                                                <LocationPicker />
+                                            </MapContainer>
+                                            <button 
+                                                type="button"
+                                                onClick={getCurrentLocation}
+                                                className="absolute bottom-4 right-4 z-[1000] bg-white px-4 py-2.5 rounded-xl shadow-xl border border-gray-100 text-indigo-600 hover:bg-indigo-50 transition-all flex items-center gap-2 text-xs font-black uppercase tracking-wider"
+                                            >
+                                                <Crosshair size={14} strokeWidth={3} /> Lấy vị trí của tôi
+                                            </button>
+                                        </div>
+                                        <p className="text-[10px] text-gray-400 mt-2 ml-1 font-medium italic">* Click trực tiếp lên bản đồ hoặc tìm kiếm địa chỉ để lấy tọa độ</p>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-2">
+                                        <div className="col-span-1 md:col-span-2">
+                                            <label className="block text-sm font-bold text-gray-600 mb-2">Mã vị trí (ID)</label>
+                                            <input required placeholder="VD: LOC001" className="input h-12" value={formData.id} onChange={e => setFormData({ ...formData, id: e.target.value })} disabled={!!editingLoc} />
+                                        </div>
+                                        <div className="col-span-1 md:col-span-2">
+                                            <label className="block text-sm font-bold text-gray-600 mb-2">Tên địa điểm</label>
+                                            <input required placeholder="VD: Trường THPT Chuyên" className="input h-12" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+                                        </div>
+                                        <div className="col-span-1 md:col-span-2">
+                                            <label className="block text-sm font-bold text-gray-600 mb-2">Địa chỉ chi tiết</label>
+                                            <textarea required placeholder="VD: 123 Đường ABC, Hà Nội" className="input min-h-[80px] py-3" value={formData.address} onChange={e => setFormData({ ...formData, address: e.target.value })} />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-bold text-gray-600 mb-2">Vĩ độ (Lat)</label>
+                                            <input required type="number" step="0.000001" className="input h-12" value={formData.lat} onChange={e => setFormData({ ...formData, lat: parseFloat(e.target.value) })} />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-bold text-gray-600 mb-2">Kinh độ (Lng)</label>
+                                            <input required type="number" step="0.000001" className="input h-12" value={formData.lng} onChange={e => setFormData({ ...formData, lng: parseFloat(e.target.value) })} />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-bold text-gray-600 mb-2">Bán kính quét (m)</label>
+                                            <input required type="number" className="input h-12" value={formData.radius} onChange={e => setFormData({ ...formData, radius: parseInt(e.target.value) })} />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-bold text-gray-600 mb-2">Trạng thái</label>
+                                            <select className="input h-12" value={formData.isActive.toString()} onChange={e => setFormData({ ...formData, isActive: e.target.value === 'true' })}>
+                                                <option value="true">Đang hoạt động</option>
+                                                <option value="false">Tạm dừng</option>
+                                            </select>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div className="col-span-2">
-                                    <label className="block text-sm font-bold text-gray-600 mb-2">Tên địa điểm</label>
-                                    <input required placeholder="VD: Trường THPT Chuyên" className="input" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+
+                                <div className="flex gap-4 pt-4 border-t border-gray-100 flex-shrink-0">
+                                    <button type="button" onClick={() => setShowModal(false)} className="btn-secondary flex-1 py-4 justify-center font-bold">Hủy bỏ</button>
+                                    <button type="submit" className="btn-primary flex-1 py-4 flex items-center justify-center gap-2 shadow-xl shadow-indigo-100 font-bold text-lg">
+                                        <Check size={20} strokeWidth={3} /> {editingLoc ? 'LƯU CẬP NHẬT' : 'KÍCH HOẠT VỊ TRÍ'}
+                                    </button>
                                 </div>
-                                <div className="col-span-2">
-                                    <label className="block text-sm font-bold text-gray-600 mb-2">Địa chỉ chi tiết</label>
-                                    <input required placeholder="VD: 123 Đường ABC, Hà Nội" className="input" value={formData.address} onChange={e => setFormData({ ...formData, address: e.target.value })} />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-bold text-gray-600 mb-2">Vĩ độ (Lat)</label>
-                                    <input required type="number" step="0.000001" className="input" value={formData.lat} onChange={e => setFormData({ ...formData, lat: parseFloat(e.target.value) })} />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-bold text-gray-600 mb-2">Kinh độ (Lng)</label>
-                                    <input required type="number" step="0.000001" className="input" value={formData.lng} onChange={e => setFormData({ ...formData, lng: parseFloat(e.target.value) })} />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-bold text-gray-600 mb-2">Bán kính quét (m)</label>
-                                    <input required type="number" className="input" value={formData.radius} onChange={e => setFormData({ ...formData, radius: parseInt(e.target.value) })} />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-bold text-gray-600 mb-2">Trạng thái</label>
-                                    <select className="input" value={formData.isActive.toString()} onChange={e => setFormData({ ...formData, isActive: e.target.value === 'true' })}>
-                                        <option value="true">Đang hoạt động</option>
-                                        <option value="false">Tạm dừng</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div className="flex gap-4 pt-4">
-                                <button type="button" onClick={() => setShowModal(false)} className="btn-secondary flex-1 py-3 justify-center">Hủy</button>
-                                <button type="submit" className="btn-primary flex-1 py-3 flex items-center justify-center gap-2 shadow-lg shadow-indigo-100">
-                                    <Check size={18} strokeWidth={3} /> {editingLoc ? 'Lưu cập nhật' : 'Kích hoạt vị trí'}
-                                </button>
-                            </div>
-                        </form>
+                            </form>
+                        </div>
                     </div>
                 </div>
             )}

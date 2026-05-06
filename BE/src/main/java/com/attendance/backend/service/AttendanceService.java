@@ -4,9 +4,11 @@ import com.attendance.backend.dto.AttendanceSummaryDTO;
 import com.attendance.backend.dto.AttendanceRecordDTO;
 import com.attendance.backend.dto.BulkAttendanceRequest;
 import com.attendance.backend.entity.AttendanceRecord;
+import com.attendance.backend.entity.Location;
 import com.attendance.backend.entity.Student;
 import com.attendance.backend.exception.ResourceNotFoundException;
 import com.attendance.backend.repository.AttendanceRecordRepository;
+import com.attendance.backend.repository.LocationRepository;
 import com.attendance.backend.repository.StudentRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,13 +32,16 @@ public class AttendanceService {
     private final AttendanceRecordRepository attendanceRepo;
     private final StudentRepository studentRepository;
     private final com.attendance.backend.repository.ScheduleRepository scheduleRepository;
+    private final LocationRepository locationRepository;
 
-    public AttendanceService(AttendanceRecordRepository attendanceRepo, 
+    public AttendanceService(AttendanceRecordRepository attendanceRepo,
                             StudentRepository studentRepository,
-                            com.attendance.backend.repository.ScheduleRepository scheduleRepository) {
+                            com.attendance.backend.repository.ScheduleRepository scheduleRepository,
+                            LocationRepository locationRepository) {
         this.attendanceRepo = attendanceRepo;
         this.studentRepository = studentRepository;
         this.scheduleRepository = scheduleRepository;
+        this.locationRepository = locationRepository;
     }
 
     /** Lấy danh sách điểm danh theo lớp và ngày */
@@ -157,6 +162,78 @@ public class AttendanceService {
             default -> "Thứ 2";
         };
     }
+
+    /**
+     * Tính khoảng cách giữa 2 tọa độ GPS bằng công thức Haversine.
+     * @return khoảng cách tính bằng MÉT
+     */
+    public double haversineDistance(double lat1, double lng1, double lat2, double lng2) {
+        final int R = 6371000; // Bán kính Trái Đất (mét)
+        double phi1 = Math.toRadians(lat1);
+        double phi2 = Math.toRadians(lat2);
+        double deltaPhi = Math.toRadians(lat2 - lat1);
+        double deltaLambda = Math.toRadians(lng2 - lng1);
+
+        double a = Math.sin(deltaPhi / 2) * Math.sin(deltaPhi / 2)
+                + Math.cos(phi1) * Math.cos(phi2)
+                * Math.sin(deltaLambda / 2) * Math.sin(deltaLambda / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
+    }
+
+    /**
+     * Kiểm tra GPS học sinh khi điểm danh (từ app mobile).
+     * - Lấy danh sách địa điểm trường đang hoạt động
+     * - Tính khoảng cách Haversine giữa học sinh và từng địa điểm
+     * - Nếu trong bán kính -> HỢP LỆ, nếu không -> TỪ CHỐI
+     */
+    @Transactional
+    public java.util.Map<String, Object> gpsCheckIn(String studentId, String classId, double lat, double lng) {
+        // 1. Lấy danh sách địa điểm đang hoạt động
+        List<Location> activeLocations = locationRepository.findByIsActive(true);
+        if (activeLocations.isEmpty()) {
+            throw new RuntimeException("Hệ thống chưa có vị trí điểm danh nào được cấu hình. Vui lòng liên hệ Admin.");
+        }
+
+        // 2. Kiểm tra học sinh có trong phạm vi cho phép không
+        Location matchedLocation = null;
+        double closestDistance = Double.MAX_VALUE;
+
+        for (Location loc : activeLocations) {
+            double distance = haversineDistance(lat, lng, loc.getLat(), loc.getLng());
+            logger.info("GPS Check: Student={} at ({},{}) vs Location={} at ({},{}) -> Distance={}m, Radius={}m",
+                    studentId, lat, lng, loc.getName(), loc.getLat(), loc.getLng(), (int)distance, loc.getRadius());
+            if (distance < closestDistance) closestDistance = distance;
+            if (distance <= loc.getRadius()) {
+                matchedLocation = loc;
+                break;
+            }
+        }
+
+        java.util.Map<String, Object> result = new java.util.HashMap<>();
+
+        if (matchedLocation == null) {
+            // Ngoài phạm vi -> KHÔNG HỢP LỆ
+            result.put("valid", false);
+            result.put("distanceMeters", (int) closestDistance);
+            result.put("message", String.format(
+                "Vị trí của bạn đang cách trường khoảng %dm. Phải ở trong phạm vi %dm để điểm danh.",
+                (int) closestDistance, activeLocations.stream().mapToInt(Location::getRadius).max().orElse(200)));
+            logger.warn("GPS Check FAILED: Student={}, Distance={}m", studentId, (int)closestDistance);
+        } else {
+            // Trong phạm vi -> HỢP LỆ
+            result.put("valid", true);
+            result.put("locationName", matchedLocation.getName());
+            result.put("distanceMeters", (int) closestDistance);
+            result.put("message", String.format(
+                "Vị trí hợp lệ! Bạn đang ở tại %s (cách %dm).",
+                matchedLocation.getName(), (int) closestDistance));
+            logger.info("GPS Check PASSED: Student={}, Location={}, Distance={}m", studentId, matchedLocation.getName(), (int)closestDistance);
+        }
+
+        return result;
+    }
+
 
     /** Cập nhật 1 bản ghi điểm danh */
     @Transactional

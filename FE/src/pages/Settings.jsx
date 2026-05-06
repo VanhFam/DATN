@@ -109,6 +109,7 @@ export function Settings({ user: currentUser }) {
     });
 
     const handleField = (k, v) => {
+        // Nếu là số, cho phép chuỗi rỗng để người dùng xóa đi nhập lại
         setSettings(s => ({ ...s, [k]: v }));
         setSaved(false);
     };
@@ -438,14 +439,24 @@ export function Settings({ user: currentUser }) {
                                             <label className="text-xs font-bold text-gray-400 uppercase tracking-wider block">Thời gian mở check-in sớm (Phút)</label>
                                             <div className="relative">
                                                 <Clock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-                                                <input type="number" className="input pl-11" value={settings.checkInEarly} onChange={e => handleField('checkInEarly', parseInt(e.target.value))} />
+                                                <input 
+                                                    type="number" 
+                                                    className="input pl-11" 
+                                                    value={settings.checkInEarly ?? ''} 
+                                                    onChange={e => handleField('checkInEarly', e.target.value === '' ? '' : parseInt(e.target.value))} 
+                                                />
                                             </div>
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-xs font-bold text-gray-400 uppercase tracking-wider block">Bán kính GPS hợp lệ (Meters)</label>
                                             <div className="relative">
                                                 <MapPin size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-                                                <input type="number" className="input pl-11" value={settings.gpsRadius} onChange={e => handleField('gpsRadius', parseInt(e.target.value))} />
+                                                <input 
+                                                    type="number" 
+                                                    className="input pl-11" 
+                                                    value={settings.gpsRadius ?? ''} 
+                                                    onChange={e => handleField('gpsRadius', e.target.value === '' ? '' : parseInt(e.target.value))} 
+                                                />
                                             </div>
                                         </div>
                                     </div>
@@ -455,7 +466,11 @@ export function Settings({ user: currentUser }) {
                                             { key: 'allowLate', label: 'Cho phép điểm danh muộn', icon: Clock },
                                             { key: 'allowReAttendance', label: 'Cho phép điểm danh lại', icon: Bell },
                                         ].map(item => (
-                                            <label key={item.key} className="flex items-center justify-between p-4 border border-gray-100 rounded-2xl hover:bg-slate-50 transition-all cursor-pointer group">
+                                            <div 
+                                                key={item.key} 
+                                                onClick={() => handleField(item.key, !settings[item.key])}
+                                                className="flex items-center justify-between p-4 border border-gray-100 rounded-2xl hover:bg-slate-50 transition-all cursor-pointer group"
+                                            >
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:scale-110 transition-transform">
                                                         <item.icon size={16} />
@@ -464,9 +479,8 @@ export function Settings({ user: currentUser }) {
                                                 </div>
                                                 <div className={`w-10 h-5 rounded-full transition-all relative ${settings[item.key] ? 'bg-indigo-600' : 'bg-gray-200'}`}>
                                                     <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${settings[item.key] ? 'left-6' : 'left-1'}`} />
-                                                    <input type="checkbox" className="hidden" checked={settings[item.key]} onChange={() => handleField(item.key, !settings[item.key])} />
                                                 </div>
-                                            </label>
+                                            </div>
                                         ))}
                                     </div>
                                 </div>
@@ -514,7 +528,12 @@ export function Settings({ user: currentUser }) {
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Số lần thử lại tối đa (Retry)</label>
-                                            <input type="number" className="input" value={settings.maxRetries} onChange={e => handleField('maxRetries', parseInt(e.target.value))} />
+                                            <input 
+                                                type="number" 
+                                                className="input" 
+                                                value={settings.maxRetries ?? ''} 
+                                                onChange={e => handleField('maxRetries', e.target.value === '' ? '' : parseInt(e.target.value))} 
+                                            />
                                         </div>
                                     </div>
                                 </div>
