@@ -41,21 +41,6 @@ public class BackendApplication {
                     long classCount = classRoomRepository.count();
                     System.out.println(">>> [DEBUG] Hiện có: " + userCount + " Users, " + studentCount + " Students, " + classCount + " Classes");
 
-                    // Migration: Chuyển dữ liệu từ cột class_id cũ sang bảng trung gian student_classes mới
-                    try {
-                        String migrationSql = "INSERT INTO student_classes (student_id, class_id) " +
-                                             "SELECT id, class_id FROM students " +
-                                             "WHERE class_id IS NOT NULL AND class_id != '' " +
-                                             "AND id NOT IN (SELECT student_id FROM student_classes)";
-                        
-                        int rows = entityManager.createNativeQuery(migrationSql).executeUpdate();
-                        if (rows > 0) {
-                            System.out.println(">>> [MIGRATION] Đã di chuyển " + rows + " bản ghi sang cấu trúc mới!");
-                        }
-                    } catch (Exception e) {
-                        // Bỏ qua nếu cột cũ không tồn tại
-                    }
-
                     // 1. Tạo Admin nếu chưa có
                     if (userRepository.findByUsername("admin").isEmpty()) {
                         System.out.println(">>> [INIT] Tạo tài khoản Admin mặc định...");

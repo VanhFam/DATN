@@ -20,7 +20,7 @@ const ALL_MENU_ITEMS = [
     { id: 'locations', label: 'Vị trí (GPS)', icon: MapPin, roles: ['admin'] },
     { id: 'attendance', label: 'Điểm danh', icon: CheckSquare, roles: ['teacher'] },
     { id: 'reports', label: 'Báo cáo', icon: FileBarChart, roles: ['admin', 'teacher'] },
-    { id: 'settings', label: 'Cài đặt', icon: Settings, roles: ['admin'] },
+    { id: 'settings', label: 'Cài đặt', icon: Settings, roles: ['admin', 'teacher'] },
 ];
 
 export function Sidebar({ currentPage, onNavigate, onLogout, user }) {

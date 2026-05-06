@@ -1,5 +1,5 @@
 # Giai đoạn 1: Build ứng dụng
-FROM node:18-alpine as build-stage
+FROM node:18-alpine AS build-stage
 
 WORKDIR /app
 
@@ -12,7 +12,7 @@ COPY . .
 RUN npm run build
 
 # Giai đoạn 2: Phục vụ file tĩnh bằng Nginx
-FROM nginx:stable-alpine as production-stage
+FROM nginx:stable-alpine AS production-stage
 
 # Copy file đã build từ giai đoạn 1 vào thư mục của Nginx
 COPY --from=build-stage /app/dist /usr/share/nginx/html

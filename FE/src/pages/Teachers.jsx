@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api } from '../utils/api';
-import { UserPlus, Search, Edit2, Trash2, Mail, Phone, BookOpen, X, Check } from 'lucide-react';
+import { UserPlus, Search, Edit2, Trash2, Mail, Phone, BookOpen, X, Check, FileSpreadsheet } from 'lucide-react';
+import { exportTeacherListExcel } from '../utils/excelExport';
 
 export function Teachers() {
     const [teachersList, setTeachersList] = useState([]);
@@ -107,12 +108,20 @@ export function Teachers() {
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
                 </div>
-                <button
-                    className="btn-primary flex items-center gap-2 whitespace-nowrap"
-                    onClick={() => { setEditingTeacher(null); setFormData({ name: '', id: '', email: '', phone: '' }); setShowModal(true); }}
-                >
-                    <UserPlus size={18} /> Thêm giáo viên
-                </button>
+                <div className="flex gap-2">
+                    <button
+                        className="btn-secondary flex items-center gap-2 whitespace-nowrap border-emerald-200 text-emerald-600 hover:bg-emerald-50"
+                        onClick={() => exportTeacherListExcel(teachersList)}
+                    >
+                        <FileSpreadsheet size={18} /> Xuất Excel
+                    </button>
+                    <button
+                        className="btn-primary flex items-center gap-2 whitespace-nowrap"
+                        onClick={() => { setEditingTeacher(null); setFormData({ name: '', id: '', email: '', phone: '' }); setShowModal(true); }}
+                    >
+                        <UserPlus size={18} /> Thêm giáo viên
+                    </button>
+                </div>
             </div>
 
             {/* Table */}

@@ -42,7 +42,7 @@ export default function App() {
                 // Admin không có trang attendance riêng, đã được xử lý ở sidebar
             } else if (role === 'teacher') {
                 // Giáo viên không được vào trang quản lý người dùng và cài đặt hệ thống
-                if (['teachers', 'settings', 'locations'].includes(currentPage)) {
+                if (['teachers', 'locations'].includes(currentPage)) {
                     setCurrentPage('dashboard');
                 }
             }

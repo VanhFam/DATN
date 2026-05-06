@@ -1,0 +1,50 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: attendance-db
+    restart: always
+    environment:
+      MYSQL_DATABASE: attendance_db
+      MYSQL_ROOT_PASSWORD: 23022004
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  ai-service:
+    build: ./AI
+    container_name: attendance-ai
+    restart: always
+    ports:
+      - "8001:8001"
+    environment:
+      - PORT=8001
+      - AI_SERVICE_KEY=datn_ai_secret_123
+
+  backend:
+    build: ./BE
+    container_name: attendance-backend
+    restart: always
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+      - ai-service
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/attendance_db?useSSL=false&serverTimezone=Asia/Ho_Chi_Minh&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=23022004
+      - AI_SERVICE_URL=http://ai-service:8001
+      - AI_SERVICE_KEY=datn_ai_secret_123
+
+  frontend:
+    build: ./FE
+    container_name: attendance-frontend
+    restart: always
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+volumes:
+  mysql_data:

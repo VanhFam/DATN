@@ -3,7 +3,8 @@ import { api } from '../utils/api';
 import {
     Calendar, CheckCircle, XCircle, Clock,
     Award, TrendingUp, LogOut, User as UserIcon,
-    Users, Mail, Phone, Filter, Loader2, AlertTriangle
+    Users, Mail, Phone, Filter, Loader2, AlertTriangle,
+    Lock, Settings, Check, X
 } from 'lucide-react';
 
 function StatItem({ label, value, color, icon: Icon }) {
@@ -31,6 +32,41 @@ export function StudentDashboard({ student, onLogout }) {
     // Mặc định xem trong 30 ngày gần nhất
     const [fromDate, setFromDate] = useState(new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0]);
     const [toDate, setToDate] = useState(new Date().toISOString().split('T')[0]);
+    
+    // Settings & Password Change
+    const [showSettings, setShowSettings] = useState(false);
+    const [isSavingPassword, setIsSavingPassword] = useState(false);
+    const [isLoadingProfile, setIsLoadingProfile] = useState(false);
+    const [passwords, setPasswords] = useState({
+        current: '',
+        new: '',
+        confirm: ''
+    });
+    const [profile, setProfile] = useState({
+        name: student?.name || '',
+        email: student?.email || '',
+        phone: student?.phone || ''
+    });
+    const [activeTab, setActiveTab] = useState('profile'); // 'profile' or 'password'
+    const [isSavingProfile, setIsSavingProfile] = useState(false);
+
+    // Load fresh profile from DB when opening settings modal
+    const openSettings = async () => {
+        setShowSettings(true);
+        setIsLoadingProfile(true);
+        try {
+            const data = await api.get('/users/profile');
+            setProfile({
+                name: data.name || student?.name || '',
+                email: data.email || student?.email || '',
+                phone: data.phone || student?.phone || ''
+            });
+        } catch (err) {
+            console.warn('Could not load profile from server, using local data:', err.message);
+        } finally {
+            setIsLoadingProfile(false);
+        }
+    };
 
     useEffect(() => {
         fetchData();
@@ -53,6 +89,62 @@ export function StudentDashboard({ student, onLogout }) {
             console.error('Failed to fetch student data:', error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handlePasswordChange = async (e) => {
+        e.preventDefault();
+        if (!passwords.current || !passwords.new) {
+            alert('Vui lòng nhập đầy đủ mật khẩu');
+            return;
+        }
+        if (passwords.new !== passwords.confirm) {
+            alert('Mật khẩu mới không khớp');
+            return;
+        }
+        
+        setIsSavingPassword(true);
+        try {
+            await api.post('/users/change-password', {
+                currentPassword: passwords.current,
+                newPassword: passwords.new
+            });
+            alert('Đổi mật khẩu thành công');
+            setPasswords({ current: '', new: '', confirm: '' });
+            setShowSettings(false);
+        } catch (error) {
+            alert('Lỗi: ' + error.message);
+        } finally {
+            setIsSavingPassword(false);
+        }
+    };
+
+    const handleProfileUpdate = async (e) => {
+        e.preventDefault();
+        setIsSavingProfile(true);
+        try {
+            await api.patch('/users/profile', {
+                name: profile.name,
+                email: profile.email,
+                phone: profile.phone
+            });
+            
+            // Sync localStorage
+            const user = JSON.parse(localStorage.getItem('attendance_user'));
+            if (user) {
+                user.name = profile.name;
+                user.email = profile.email;
+                user.phone = profile.phone;
+                localStorage.setItem('attendance_user', JSON.stringify(user));
+                window.dispatchEvent(new Event('storage'));
+            }
+            
+            alert('Cập nhật hồ sơ thành công');
+            setShowSettings(false);
+        } catch (error) {
+            alert('Lỗi: ' + error.message);
+        } finally {
+            setIsSavingProfile(false);
         }
     };
 
@@ -88,13 +180,22 @@ export function StudentDashboard({ student, onLogout }) {
                         <p className="text-[10px] text-indigo-600 uppercase tracking-widest font-black">Mã số: {student.id}</p>
                     </div>
                 </div>
-                <button
-                    onClick={onLogout}
-                    className="flex items-center gap-2 text-gray-400 hover:text-red-500 transition-all font-bold bg-slate-50 px-4 py-2 rounded-xl hover:bg-red-50 border border-gray-100"
-                >
-                    <LogOut size={18} />
-                    <span className="hidden sm:inline">Đăng xuất</span>
-                </button>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={openSettings}
+                        className="flex items-center gap-2 text-gray-500 hover:text-indigo-600 transition-all font-bold bg-slate-50 px-4 py-2 rounded-xl hover:bg-indigo-50 border border-gray-100"
+                    >
+                        <Settings size={18} />
+                        <span className="hidden sm:inline">Tài khoản</span>
+                    </button>
+                    <button
+                        onClick={onLogout}
+                        className="flex items-center gap-2 text-gray-400 hover:text-red-500 transition-all font-bold bg-slate-50 px-4 py-2 rounded-xl hover:bg-red-50 border border-gray-100"
+                    >
+                        <LogOut size={18} />
+                        <span className="hidden sm:inline">Đăng xuất</span>
+                    </button>
+                </div>
             </header>
 
             <main className="flex-1 p-4 md:p-8 space-y-6 max-w-6xl mx-auto w-full animate-fade-in">
@@ -225,6 +326,150 @@ export function StudentDashboard({ student, onLogout }) {
                 </div>
                 <p>© 2026 Attendance AI • Hệ thống quản lý chuyên cần thông minh</p>
             </footer>
+
+            {/* Settings & Profile Modal */}
+            {showSettings && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-slide-up">
+                        <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-indigo-600 text-white">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                                    <UserIcon size={20} />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-lg">Cài đặt tài khoản</h3>
+                                    <p className="text-indigo-100 text-[10px] uppercase font-black tracking-widest">Thông tin & Bảo mật</p>
+                                </div>
+                            </div>
+                            <button onClick={() => setShowSettings(false)} className="p-2 hover:bg-white/10 rounded-xl transition-colors">
+                                <X size={20} />
+                            </button>
+                        </div>
+                        
+                        {/* Tabs */}
+                        <div className="flex border-b border-gray-100">
+                            <button 
+                                onClick={() => setActiveTab('profile')}
+                                className={`flex-1 py-4 text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'profile' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-400 hover:text-gray-600'}`}
+                            >
+                                Hồ sơ
+                            </button>
+                            <button 
+                                onClick={() => setActiveTab('password')}
+                                className={`flex-1 py-4 text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'password' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-400 hover:text-gray-600'}`}
+                            >
+                                Mật khẩu
+                            </button>
+                        </div>
+
+                        <div className="p-6">
+                            {activeTab === 'profile' ? (
+                                isLoadingProfile ? (
+                                    <div className="flex flex-col items-center justify-center py-10 text-gray-400 gap-3">
+                                        <Loader2 size={28} className="animate-spin text-indigo-500" />
+                                        <p className="text-xs font-bold uppercase tracking-widest">Đang tải thông tin...</p>
+                                    </div>
+                                ) : (
+                                <form onSubmit={handleProfileUpdate} className="space-y-4">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Họ và tên</label>
+                                        <div className="relative">
+                                            <UserIcon size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                                            <input 
+                                                className="input pl-11 bg-slate-50" 
+                                                value={profile.name}
+                                                onChange={e => setProfile({...profile, name: e.target.value})}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Email (Gmail)</label>
+                                        <div className="relative">
+                                            <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                                            <input 
+                                                type="email"
+                                                className="input pl-11 bg-slate-50" 
+                                                placeholder="example@gmail.com"
+                                                value={profile.email}
+                                                onChange={e => setProfile({...profile, email: e.target.value})}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Số điện thoại</label>
+                                        <div className="relative">
+                                            <Phone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                                            <input 
+                                                className="input pl-11 bg-slate-50" 
+                                                placeholder="0987xxxxxx"
+                                                value={profile.phone}
+                                                onChange={e => setProfile({...profile, phone: e.target.value})}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="pt-4">
+                                        <button 
+                                            type="submit"
+                                            disabled={isSavingProfile}
+                                            className="w-full btn-primary justify-center py-3 shadow-lg shadow-indigo-200"
+                                        >
+                                            {isSavingProfile ? <Loader2 size={18} className="animate-spin" /> : <Check size={18} strokeWidth={3} />}
+                                            {isSavingProfile ? 'Đang lưu...' : 'Lưu thông tin'}
+                                        </button>
+                                    </div>
+                                </form>
+                                )
+                            ) : (
+                                <form onSubmit={handlePasswordChange} className="space-y-4">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Mật khẩu hiện tại</label>
+                                        <input 
+                                            type="password" 
+                                            className="input bg-slate-50" 
+                                            placeholder="••••••••"
+                                            required
+                                            value={passwords.current}
+                                            onChange={e => setPasswords({...passwords, current: e.target.value})}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Mật khẩu mới</label>
+                                        <input 
+                                            type="password" 
+                                            className="input bg-slate-50" 
+                                            placeholder="••••••••"
+                                            required
+                                            value={passwords.new}
+                                            onChange={e => setPasswords({...passwords, new: e.target.value})}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Xác nhận mật khẩu</label>
+                                        <input 
+                                            type="password" 
+                                            className="input bg-slate-50" 
+                                            placeholder="••••••••"
+                                            required
+                                            value={passwords.confirm}
+                                            onChange={e => setPasswords({...passwords, confirm: e.target.value})}
+                                        />
+                                    </div>
+                                    <div className="pt-4">
+                                        <button 
+                                            type="submit"
+                                            disabled={isSavingPassword}
+                                            className="w-full btn-primary justify-center py-3 shadow-lg shadow-indigo-200"
+                                        >
+                                            {isSavingPassword ? <Loader2 size={18} className="animate-spin" /> : <Check size={18} strokeWidth={3} />}
+                                            {isSavingPassword ? 'Đang lưu...' : 'Cập nhật mật khẩu'}
+                                        </button>
+                                    </div>
+                                </form>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

@@ -5,6 +5,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
+
 import java.util.Map;
 
 @RestController
@@ -30,10 +32,17 @@ public class UserController {
         return ResponseEntity.ok(Map.of("message", "Đã cập nhật trạng thái người dùng"));
     }
 
+    @GetMapping("/profile")
+    public ResponseEntity<?> getProfile(Authentication authentication) {
+        String username = authentication.getName();
+        Map<String, String> profile = userService.getProfile(username);
+        return ResponseEntity.ok(profile);
+    }
+
     @PatchMapping("/profile")
     public ResponseEntity<?> updateProfile(Authentication authentication, @RequestBody Map<String, String> request) {
         String username = authentication.getName();
-        userService.updateProfile(username, request.get("name"), request.get("email"));
+        userService.updateProfile(username, request.get("name"), request.get("email"), request.get("phone"));
         return ResponseEntity.ok(Map.of("message", "Cập nhật hồ sơ thành công"));
     }
 

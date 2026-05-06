@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { api } from '../utils/api';
 import { 
     School, Bell, Shield, Palette, Check, ShieldAlert, Users, 
-    Lock, Mail, User, Eye, EyeOff, MapPin, Cpu, Camera, 
+    Lock, Mail, User, Phone, Eye, EyeOff, MapPin, Cpu, Camera, 
     Clock, Calendar, Trash2, Edit2, UserMinus, UserCheck, Search, Loader2
 } from 'lucide-react';
 
@@ -22,6 +22,7 @@ export function Settings({ user: currentUser }) {
         // Account
         name: currentUser?.name || '',
         email: currentUser?.email || '',
+        phone: currentUser?.phone || '',
         
         // Attendance Rules
         checkInEarly: 15,
@@ -47,15 +48,29 @@ export function Settings({ user: currentUser }) {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const [usersData, configData] = await Promise.all([
-                isAdmin ? api.get('/users') : Promise.resolve([]),
-                api.get('/settings')
-            ]);
-            
-            if (isAdmin) setUserList(usersData);
-            
+            // 1. Fetch current user's fresh profile from DB
+            const profileData = await api.get('/users/profile').catch(err => {
+                console.warn('Could not load profile:', err.message);
+                return null;
+            });
+
+            if (profileData) {
+                setSettings(prev => ({
+                    ...prev,
+                    name: profileData.name || prev.name,
+                    email: profileData.email || prev.email,
+                    phone: profileData.phone || prev.phone,
+                }));
+            }
+
+            // 2. Fetch system settings
+            const configData = await api.get('/settings').catch(err => {
+                console.warn('Could not load system settings:', err.message);
+                return {};
+            });
+
             // Map backend settings to local state
-            if (configData && Object.keys(configData).length > 0) {
+            if (configData && typeof configData === 'object' && Object.keys(configData).length > 0) {
                 setSettings(prev => ({
                     ...prev,
                     checkInEarly: parseInt(configData.checkInEarly) || prev.checkInEarly,
@@ -70,12 +85,22 @@ export function Settings({ user: currentUser }) {
                     schoolName: configData.schoolName || prev.schoolName,
                 }));
             }
+
+            // 3. Admin only: fetch user list
+            if (isAdmin) {
+                const usersData = await api.get('/users').catch(err => {
+                    console.warn('Could not load users:', err.message);
+                    return [];
+                });
+                setUserList(Array.isArray(usersData) ? usersData : []);
+            }
         } catch (error) {
-            console.error('Failed to fetch settings:', error);
+            console.error('Failed to fetch settings page data:', error);
         } finally {
             setLoading(false);
         }
     };
+
 
     const [passwords, setPasswords] = useState({
         current: '',
@@ -110,7 +135,8 @@ export function Settings({ user: currentUser }) {
             try {
                 await api.patch('/users/profile', {
                     name: settings.name || '',
-                    email: settings.email || ''
+                    email: settings.email || '',
+                    phone: settings.phone || ''
                 });
                 
                 // Cập nhật localStorage để đồng bộ giao diện
@@ -118,6 +144,7 @@ export function Settings({ user: currentUser }) {
                 if (user) {
                     user.name = settings.name;
                     user.email = settings.email;
+                    user.phone = settings.phone;
                     localStorage.setItem('attendance_user', JSON.stringify(user));
                     
                     // Cập nhật tên trong danh sách Người dùng (nếu đang hiển thị)
@@ -211,8 +238,10 @@ export function Settings({ user: currentUser }) {
         <div className="max-w-6xl mx-auto space-y-6 animate-fade-in pb-20">
             <div className="flex items-center justify-between gap-4">
                 <div>
-                    <h2 className="text-2xl font-black text-gray-800">Cài đặt hệ thống</h2>
-                    <p className="text-sm text-gray-400">Cấu hình các thông số vận hành và quản lý tài khoản</p>
+                    <h2 className="text-2xl font-black text-gray-800">{isAdmin ? 'Cài đặt hệ thống' : 'Hồ sơ & Bảo mật'}</h2>
+                    <p className="text-sm text-gray-400">
+                        {isAdmin ? 'Cấu hình các thông số vận hành và quản lý tài khoản' : 'Quản lý thông tin cá nhân và mật khẩu của bạn'}
+                    </p>
                 </div>
                 {saved && (
                     <div className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-600 rounded-full text-xs font-bold border border-emerald-100 animate-slide-up">
@@ -252,7 +281,7 @@ export function Settings({ user: currentUser }) {
                                     <div className="flex items-center gap-8">
                                         <div className="relative group">
                                             <div className="w-24 h-24 rounded-3xl bg-indigo-50 flex items-center justify-center text-indigo-600 font-bold text-3xl border-2 border-dashed border-indigo-200 group-hover:bg-indigo-100 transition-all">
-                                                {settings.name[0] || 'U'}
+                                                {(settings.name && settings.name[0]) || 'U'}
                                             </div>
                                             <button className="absolute -bottom-2 -right-2 w-8 h-8 rounded-xl bg-white shadow-lg border border-gray-100 flex items-center justify-center text-gray-400 hover:text-indigo-600">
                                                 <Camera size={14} />
@@ -277,6 +306,13 @@ export function Settings({ user: currentUser }) {
                                             <div className="relative">
                                                 <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                                                 <input className="input pl-11" value={settings.email} onChange={e => handleField('email', e.target.value)} />
+                                            </div>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider px-1">Số điện thoại</label>
+                                            <div className="relative">
+                                                <Phone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                                                <input className="input pl-11" value={settings.phone} onChange={e => handleField('phone', e.target.value)} />
                                             </div>
                                         </div>
                                     </div>

@@ -6,7 +6,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 @Service
@@ -24,13 +26,26 @@ public class    UserService {
         return userRepository.findAll();
     }
 
+    public Map<String, String> getProfile(String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
+        Map<String, String> profile = new HashMap<>();
+        profile.put("name", user.getName() != null ? user.getName() : "");
+        profile.put("email", user.getEmail() != null ? user.getEmail() : "");
+        profile.put("phone", user.getPhone() != null ? user.getPhone() : "");
+        profile.put("username", user.getUsername());
+        profile.put("role", user.getRole() != null ? user.getRole().name() : "");
+        return profile;
+    }
+
     @Transactional
-    public void updateProfile(String username, String name, String email) {
+    public void updateProfile(String username, String name, String email, String phone) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
         
         user.setName(name);
         user.setEmail(email);
+        user.setPhone(phone);
         userRepository.saveAndFlush(user);
     }
 

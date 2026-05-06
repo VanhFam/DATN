@@ -8,6 +8,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
 import java.util.Map;
@@ -15,7 +16,7 @@ import java.util.Map;
 @Service
 public class FaceRecognitionService {
 
-    @Value("${ai.service.url:http://localhost:8001}")
+    @Value("${ai.service.url:http://attendance-ai:8001}")
     private String aiServiceUrl;
 
     @Value("${ai.service.key:datn_ai_secret_123}")
@@ -24,14 +25,14 @@ public class FaceRecognitionService {
     private final RestTemplate restTemplate = new RestTemplate();
 
     /**
-     * Gửi ảnh để lấy vector 128 chiều (Face Encoding)
+     * Gửi ảnh để lấy vector 128 chiều (Face Embedding)
      */
     public String getFaceEmbedding(MultipartFile image) throws IOException {
-        String url = aiServiceUrl + "/encode";
+        String url = aiServiceUrl + "/extract-embedding";
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
-        headers.set("api-key", aiServiceKey);
+        headers.set("x-api-key", aiServiceKey); // Khớp với Header trong FastAPI
 
         MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
         body.add("file", new ByteArrayResource(image.getBytes()) {
@@ -47,11 +48,11 @@ public class FaceRecognitionService {
             ResponseEntity<Map> response = restTemplate.postForEntity(url, requestEntity, Map.class);
             if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
                 Object embedding = response.getBody().get("embedding");
-                // Convert list to comma separated string for easy storage
-                return embedding.toString().replaceAll("[\\[\\]\\s]", "");
+                // Lưu dưới dạng JSON string để AI dễ đọc lại sau này
+                return embedding.toString();
             }
         } catch (Exception e) {
-            throw new RuntimeException("Lỗi khi kết nối với AI Service: " + e.getMessage());
+            throw new RuntimeException("Lỗi khi trích xuất khuôn mặt từ AI Service: " + e.getMessage());
         }
         return null;
     }
@@ -60,12 +61,15 @@ public class FaceRecognitionService {
      * So sánh ảnh mới với vector đã lưu trong Database
      */
     public Map<String, Object> verifyFace(MultipartFile image, String storedEmbedding) throws IOException {
-        String url = aiServiceUrl + "/verify";
+        // Truyền embedding_data qua Query Parameter để khớp với API Python
+        String url = UriComponentsBuilder.fromHttpUrl(aiServiceUrl + "/verify")
+                .queryParam("embedding_data", storedEmbedding)
+                .queryParam("threshold", 0.6)
+                .toUriString();
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
-        headers.set("api-key", aiServiceKey);
-        headers.set("stored-embedding", storedEmbedding);
+        headers.set("x-api-key", aiServiceKey);
 
         MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
         body.add("file", new ByteArrayResource(image.getBytes()) {
@@ -81,7 +85,7 @@ public class FaceRecognitionService {
             ResponseEntity<Map> response = restTemplate.postForEntity(url, requestEntity, Map.class);
             return (Map<String, Object>) response.getBody();
         } catch (Exception e) {
-            throw new RuntimeException("Lỗi khi xác thực khuôn mặt: " + e.getMessage());
+            throw new RuntimeException("Lỗi khi xác thực khuôn mặt qua AI Service: " + e.getMessage());
         }
     }
 }

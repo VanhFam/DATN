@@ -108,3 +108,30 @@ export function exportAttendanceRangeExcel({ className, fromDate, toDate, studen
 
     XLSX.writeFile(wb, `baocao_chitiet_${className}_${fromDate}_to_${toDate}.xlsx`);
 }
+
+/**
+ * Xuất danh sách thông tin giáo viên ra Excel
+ */
+export function exportTeacherListExcel(teachers) {
+    const data = teachers.map((t, i) => ({
+        'STT': i + 1,
+        'Mã giáo viên': t.id,
+        'Họ và tên': t.name,
+        'Email': t.email,
+        'Mã người dùng': t.userId || '—'
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Danh sách giáo viên");
+
+    ws['!cols'] = [
+        { wch: 5 },
+        { wch: 15 },
+        { wch: 25 },
+        { wch: 30 },
+        { wch: 15 }
+    ];
+
+    XLSX.writeFile(wb, `danh_sach_giao_vien.xlsx`);
+}

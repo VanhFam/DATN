@@ -76,16 +76,6 @@ export function Login({ onLogin }) {
                         </div>
                     </div>
 
-                    <div className="bg-indigo-50 text-indigo-600 text-[10px] p-3 rounded-xl border border-indigo-100 flex items-start gap-2">
-                        <Info size={14} className="mt-0.5 shrink-0" />
-                        <div className="space-y-1">
-                            <p className="font-bold uppercase tracking-wider">Hướng dẫn đăng nhập:</p>
-                            <p>• Admin: <span className="font-mono font-bold">admin/admin</span></p>
-                            <p>• Giáo viên: <span className="font-mono font-bold">teacher/teacher</span></p>
-                            <p>• Học sinh: <span className="font-mono font-bold">HS001</span> (Mật khẩu tùy ý)</p>
-                        </div>
-                    </div>
-
                     {error && (
                         <div className="bg-red-50 text-red-600 text-xs p-3 rounded-lg border border-red-100 animate-fade-in flex items-center gap-2">
                             <div className="w-1 h-1 bg-red-600 rounded-full" />

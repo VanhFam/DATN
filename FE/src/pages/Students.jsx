@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { api } from '../utils/api';
-import { exportStudentListPDF } from '../utils/pdfExport';
 import { exportDailyAttendanceExcel } from '../utils/excelExport'; 
 import { Plus, Search, Edit2, Trash2, Download, X, Check, FileSpreadsheet } from 'lucide-react';
 
@@ -187,9 +186,6 @@ export function Students({ user }) {
                         onChange={e => setSearch(e.target.value)}
                     />
                 </div>
-                <button className="btn-secondary" onClick={() => exportStudentListPDF(filtered)}>
-                    <Download size={15} /> PDF
-                </button>
                 <button className="btn-secondary border-emerald-200 text-emerald-600 hover:bg-emerald-50" 
                     onClick={() => {
                         const data = filtered.map((s, i) => ({
