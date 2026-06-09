@@ -217,8 +217,8 @@ export function Classes() {
                         </div>
                         <div className="space-y-1 mb-4">
                             <h3 className="text-lg font-bold text-gray-800">Lớp: {cls.name}</h3>
-                            <p className="text-xs text-gray-400 font-mono tracking-wider uppercase">{cls.id}</p>
-                            {cls.subjectCode && <span className="inline-block px-2 py-1 bg-indigo-100 text-indigo-700 text-[10px] rounded uppercase font-bold mt-1">Mã môn chuẩn: {cls.subjectCode}</span>}
+                            <p className="text-xs text-gray-400 font-mono tracking-wider uppercase">Mã lớp: {cls.id}</p>
+                            {cls.subjectCode && <span className="inline-block px-2 py-1 bg-indigo-100 text-indigo-700 text-[10px] rounded uppercase font-bold mt-1">Mã môn : {cls.subjectCode}</span>}
                             <span className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-50 text-emerald-700 text-[10px] rounded uppercase font-bold mt-1">
                                 <Calendar size={11} /> {getSemesterName(cls.semesterId)}
                             </span>
