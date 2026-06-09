@@ -217,12 +217,19 @@ export function Classes() {
                         </div>
                         <div className="space-y-1 mb-4">
                             <h3 className="text-lg font-bold text-gray-800">Lớp: {cls.name}</h3>
-                            <p className="text-xs text-gray-400 font-mono tracking-wider uppercase">Mã lớp: {cls.id}</p>
-                            {cls.subjectCode && <span className="inline-block px-2 py-1 bg-indigo-100 text-indigo-700 text-[10px] rounded uppercase font-bold mt-1">Mã môn : {cls.subjectCode}</span>}
-                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-50 text-emerald-700 text-[10px] rounded uppercase font-bold mt-1">
-                                <Calendar size={11} /> {getSemesterName(cls.semesterId)}
-                            </span>
-                        </div>
+                            <p className="mt-1 text-sm text-gray-500 font-medium">
+                                        Mã lớp: <span className="font-mono text-gray-600">{cls.id}</span>
+                            </p>
+                            <div className="flex flex-wrap gap-2 pt-2">
+                                <span className="px-2 py-1 rounded-lg bg-indigo-50 text-indigo-600 text-sm font-bold">
+                                    Mã Môn: {cls.subjectCode || 'Chưa có mã chuẩn'}
+                                </span>
+
+                                <span className="px-2 py-1 rounded-lg bg-emerald-50 text-emerald-600 text-xs font-bold">
+                                    {getSemesterName(cls.semesterId)}
+                                </span>
+                            </div>
+                            </div>
                         <div className="space-y-3 pt-4 border-t border-gray-50">
                             {cls.totalSessions && (
                                 <div className="flex items-center justify-between text-sm">
