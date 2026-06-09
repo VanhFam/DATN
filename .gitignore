@@ -1,0 +1,36 @@
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Backend
+BE/target/
+BE/.mvn/
+BE/*.jar
+BE/*.war
+BE/uploads/
+
+# Frontend
+FE/node_modules/
+FE/dist/
+FE/.env
+FE/.env.local
+
+# Python
+__pycache__/
+*.pyc
+venv/
+.venv/
+
+# AI Python
+AIFacePython/__pycache__/
+AIFacePython/venv/
+AIFacePython/.venv/

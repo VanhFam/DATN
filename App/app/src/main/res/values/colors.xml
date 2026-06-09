@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    
+    <!-- Indigo Palette (Match Web FE) -->
+    <color name="primary">#4F46E5</color>
+    <color name="primary_light">#EEF2FF</color>
+    <color name="primary_dark">#3730A3</color>
+    
+    <color name="background">#F8FAFC</color>
+    <color name="card_bg">#FFFFFF</color>
+    
+    <color name="text_main">#1E293B</color>
+    <color name="text_secondary">#64748B</color>
+    
+    <color name="success">#10B981</color>
+    <color name="error">#EF4444</color>
+    <color name="warning">#F59E0B</color>
+</resources>

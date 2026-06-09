@@ -1,0 +1,12 @@
+services:
+  attendance-fe:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: attendance-frontend
+    ports:
+      - "3000:80"
+    restart: always
+    # Thêm biến môi trường nếu cần ở đây
+    # environment:
+    #   - VITE_API_URL=http://your-api-url.com
