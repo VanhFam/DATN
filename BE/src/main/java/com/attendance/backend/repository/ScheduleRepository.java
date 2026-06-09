@@ -26,6 +26,8 @@ public interface ScheduleRepository extends JpaRepository<Schedule, String> {
 
     List<Schedule> findByLocationId(String locationId);
 
+    long countBySemesterId(Long semesterId);
+
     @org.springframework.data.jpa.repository.Query("""
             SELECT s FROM Schedule s
             WHERE (:semesterId IS NULL OR s.semesterId = :semesterId)

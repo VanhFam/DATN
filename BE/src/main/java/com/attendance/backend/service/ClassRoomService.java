@@ -111,6 +111,11 @@ public class ClassRoomService {
     public ClassRoom update(String id, ClassRoom updated) {
         ClassRoom existing = getById(id);
         validateSemester(updated.getSemesterId());
+        long enrolledCount = studentRepository.countByClassId(existing.getId());
+
+        if (updated.getMaxStudents() != null && updated.getMaxStudents() < enrolledCount) {
+            throw new RuntimeException("Sĩ số tối đa (" + updated.getMaxStudents() + ") không được nhỏ hơn số lượng sinh viên hiện tại (" + enrolledCount + ")");
+        }
 
         // Trường hợp đổi Mã lớp (ID)
         if (!id.equals(updated.getId())) {
@@ -139,6 +144,40 @@ public class ClassRoomService {
         if (!existing.getName().equals(updated.getName()) && classRoomRepository.existsByName(updated.getName()))
             throw new RuntimeException("Tên lớp '" + updated.getName() + "' đã tồn tại.");
 
+        // Kiểm tra thay đổi subjectCode
+        if (updated.getSubjectCode() != null && !updated.getSubjectCode().trim().isEmpty() &&
+            !updated.getSubjectCode().equals(existing.getSubjectCode())) {
+            
+            // Tìm tất cả sinh viên của lớp này
+            List<com.attendance.backend.entity.Student> students = studentRepository.findByClassId(existing.getId());
+            
+            String newCode = updated.getSubjectCode();
+            String semesterKey = "UNSCHEDULED";
+            List<com.attendance.backend.entity.Schedule> schedules = scheduleRepository.findByClassId(existing.getId());
+            if (!schedules.isEmpty() && schedules.get(0).getSemesterId() != null) {
+                semesterKey = String.valueOf(schedules.get(0).getSemesterId());
+            }
+
+            for (com.attendance.backend.entity.Student student : students) {
+                // Kiểm tra xem sinh viên có học lớp khác cùng subjectCode trong cùng kỳ không
+                for (ClassRoom otherClass : student.getClasses()) {
+                    if (otherClass.getId().equals(existing.getId())) continue;
+                    
+                    if (newCode.equals(otherClass.getSubjectCode())) {
+                        String otherSemesterKey = "UNSCHEDULED";
+                        List<com.attendance.backend.entity.Schedule> otherSchedules = scheduleRepository.findByClassId(otherClass.getId());
+                        if (!otherSchedules.isEmpty() && otherSchedules.get(0).getSemesterId() != null) {
+                            otherSemesterKey = String.valueOf(otherSchedules.get(0).getSemesterId());
+                        }
+                        
+                        if (semesterKey.equals(otherSemesterKey)) {
+                            throw new RuntimeException("Thay đổi mã môn chuẩn gây xung đột: Sinh viên " + student.getId() + " đang học lớp " + otherClass.getId() + " có cùng mã môn chuẩn trong cùng học kỳ.");
+                        }
+                    }
+                }
+            }
+        }
+
         existing.setName(updated.getName());
         existing.setDescription(updated.getDescription());
         existing.setMaxStudents(updated.getMaxStudents());
@@ -152,9 +191,11 @@ public class ClassRoomService {
     public void delete(String id) {
         getById(id);
 
-        // Xóa trực tiếp bằng query — không load vào memory
+        if (!scheduleRepository.findByClassId(id).isEmpty()) {
+            throw new RuntimeException("Không thể xóa học phần đã được phân lịch dạy");
+        }
+
         attendanceRecordRepository.deleteByClassId(id);
-        scheduleRepository.deleteByClassId(id);
 
         // Gỡ liên kết lớp của học sinh (không xóa học sinh)
         var students = studentRepository.findByClassId(id);

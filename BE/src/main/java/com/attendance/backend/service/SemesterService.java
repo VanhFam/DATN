@@ -16,9 +16,11 @@ import java.util.List;
 public class SemesterService {
 
     private final SemesterRepository semesterRepository;
+    private final com.attendance.backend.repository.ScheduleRepository scheduleRepository;
 
-    public SemesterService(SemesterRepository semesterRepository) {
+    public SemesterService(SemesterRepository semesterRepository, com.attendance.backend.repository.ScheduleRepository scheduleRepository) {
         this.semesterRepository = semesterRepository;
+        this.scheduleRepository = scheduleRepository;
     }
 
     public List<Semester> getAllSemesters() {
@@ -60,8 +62,13 @@ public class SemesterService {
     @Transactional
     public Semester setActive(Long id) {
         semesterRepository.findByIsActiveTrue().ifPresent(current -> {
-            current.setIsActive(false);
-            semesterRepository.save(current);
+            if (!current.getId().equals(id)) {
+                if (scheduleRepository.countBySemesterId(current.getId()) > 0) {
+                    throw new RuntimeException("Cảnh báo: Học kỳ đang hoạt động (" + current.getName() + ") đang có lịch học. Không thể tự động vô hiệu hóa.");
+                }
+                current.setIsActive(false);
+                semesterRepository.save(current);
+            }
         });
         Semester semester = getById(id);
         semester.setIsActive(true);
@@ -92,5 +99,14 @@ public class SemesterService {
                         && !s.getId().equals(excludeId));
         if (nameTaken)
             throw new RuntimeException("Tên học kỳ đã tồn tại: " + semester.getName());
+
+        // Kiểm tra học kỳ giao nhau
+        boolean isOverlapping = semesterRepository.findAll().stream()
+                .filter(s -> !s.getId().equals(excludeId))
+                .anyMatch(s -> !semester.getStartDate().isAfter(s.getEndDate()) &&
+                               !semester.getEndDate().isBefore(s.getStartDate()));
+        if (isOverlapping) {
+            throw new RuntimeException("Khoảng thời gian học kỳ bị giao nhau với một học kỳ khác đã tồn tại");
+        }
     }
 }

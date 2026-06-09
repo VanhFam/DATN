@@ -101,6 +101,20 @@
     animation: scaleIn 0.2s ease-out;
 }
 
+@keyframes loginPhoto {
+    from {
+        transform: scale(1.04);
+    }
+
+    to {
+        transform: scale(1.1) translate3d(-1.5%, -1%, 0);
+    }
+}
+
+.animate-login-photo {
+    animation: loginPhoto 18s ease-in-out infinite alternate;
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar {
     width: 6px;

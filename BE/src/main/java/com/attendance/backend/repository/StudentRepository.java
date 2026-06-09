@@ -15,6 +15,9 @@ import java.util.Optional;
 public interface StudentRepository extends JpaRepository<Student, String> {
     @Query("SELECT s FROM Student s JOIN s.classes c WHERE c.id = :classId")
     List<Student> findByClassId(@Param("classId") String classId);
+
+    @Query("SELECT COUNT(s) FROM Student s JOIN s.classes c WHERE c.id = :classId")
+    long countByClassId(@Param("classId") String classId);
     
     List<Student> findByIsActive(Boolean isActive);
     

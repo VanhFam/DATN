@@ -245,6 +245,12 @@ public class StudentService {
     @Transactional
     public void deleteStudent(String id) {
         Student student = findOrThrow(id);
+        
+        long attendanceCount = attendanceRecordRepository.countTotalByStudentAndDateRange(id, java.time.LocalDate.of(2000, 1, 1), java.time.LocalDate.of(2100, 1, 1));
+        if (attendanceCount > 0) {
+            throw new RuntimeException("Sinh viên đã có lịch sử điểm danh, vui lòng sử dụng tính năng Vô hiệu hóa (Soft Delete) thay vì xóa");
+        }
+
         attendanceRecordRepository.deleteByStudentId(id);
         studentRepository.deleteById(id);
         if (student.getUserId() != null) {
@@ -288,23 +294,25 @@ public class StudentService {
             throw new RuntimeException("Học phần không tồn tại: " + String.join(", ", notFound));
         }
 
-        // Kiểm tra logic: không học 2 lớp cùng mã môn chuẩn trong 1 học kỳ
-        Map<String, String> enrolledSubjects = new HashMap<>();
+        // Kiểm tra logic: không học 2 lớp cùng môn trong 1 học kỳ
+        java.util.Map<String, String> enrolledSubjects = new java.util.HashMap<>();
         for (ClassRoom cr : classRooms) {
-            String code = cr.getSubjectCode() == null ? null : cr.getSubjectCode().trim().toUpperCase();
+            String code = cr.getSubjectCode();
             if (code == null || code.trim().isEmpty()) {
                 continue; // Bỏ qua nếu lớp học chưa có mã môn chuẩn
             }
-            for (Long semesterId : resolveSemesterIds(cr)) {
-                String key = semesterId + "-" + code;
-                String existingClassId = enrolledSubjects.get(key);
-                if (existingClassId != null && !existingClassId.equals(cr.getId())) {
-                    throw new RuntimeException("Học sinh không thể học môn có mã " + code
-                            + " ở 2 lớp khác nhau (" + existingClassId + " và " + cr.getId()
-                            + ") trong cùng một học kỳ!");
-                }
-                enrolledSubjects.putIfAbsent(key, cr.getId());
+            List<Schedule> schedules = scheduleRepository.findByClassId(cr.getId());
+            String semesterKey = "UNSCHEDULED";
+            if (!schedules.isEmpty() && schedules.get(0).getSemesterId() != null) {
+                semesterKey = String.valueOf(schedules.get(0).getSemesterId());
             }
+
+            String key = semesterKey + "-" + code;
+            if (enrolledSubjects.containsKey(key)) {
+                throw new RuntimeException("Học sinh không thể học môn có mã " + code + 
+                        " ở 2 lớp khác nhau (" + enrolledSubjects.get(key) + " và " + cr.getId() + ") trong cùng một học kỳ!");
+            }
+            enrolledSubjects.put(key, cr.getId());
         }
 
         student.setClasses(classRooms);

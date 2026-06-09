@@ -53,15 +53,7 @@ function StudentModal({ student, classes, defaultId, onClose, onSave }) {
                         <label className="block text-sm font-medium text-gray-700 mb-1">Họ và tên</label>
                         <input className="input" value={form.name} onChange={e => handle('name', e.target.value)} placeholder="Nguyễn Văn A" />
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Học phần</label>
-                        <select className="input" value={form.classId} onChange={e => handle('classId', e.target.value)}>
-                            <option value="">-- Chọn học phần --</option>
-                            {classes.map(c => (
-                                <option key={c.id} value={c.id}>{c.name || c.id}</option>
-                            ))}
-                        </select>
-                    </div>
+
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Giới tính</label>

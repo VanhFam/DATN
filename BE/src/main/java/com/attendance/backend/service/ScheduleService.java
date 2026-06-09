@@ -23,13 +23,16 @@ public class ScheduleService {
     private final ScheduleRepository scheduleRepository;
 //    private final TeacherRepository teacherRepository;
     private final ClassRoomRepository classRoomRepository;
+    private final com.attendance.backend.repository.AttendanceRecordRepository attendanceRecordRepository;
 
     public ScheduleService(ScheduleRepository scheduleRepository, 
                           TeacherRepository teacherRepository,
-                          ClassRoomRepository classRoomRepository) {
+                          ClassRoomRepository classRoomRepository,
+                          com.attendance.backend.repository.AttendanceRecordRepository attendanceRecordRepository) {
         this.scheduleRepository = scheduleRepository;
 //        this.teacherRepository = teacherRepository;
         this.classRoomRepository = classRoomRepository;
+        this.attendanceRecordRepository = attendanceRecordRepository;
     }
 
     public List<ScheduleDTO> getAllSchedules() {
@@ -135,6 +138,14 @@ public class ScheduleService {
             throw new RuntimeException("Thời gian bắt đầu phải trước thời gian kết thúc");
         }
 
+        ClassRoom classRoom = classRoomRepository.findById(dto.getClassId())
+                .orElseThrow(() -> new RuntimeException("Học phần '" + dto.getClassId() + "' không tồn tại trong hệ thống"));
+        
+        if (dto.getSemesterId() != null && classRoom.getSemesterId() != null &&
+            !dto.getSemesterId().equals(classRoom.getSemesterId())) {
+            throw new RuntimeException("Học kỳ của lịch học (" + dto.getSemesterId() + ") không khớp với học kỳ của lớp học (" + classRoom.getSemesterId() + ")");
+        }
+
         List<Schedule> allSchedules = scheduleRepository.findAll();
         String normalizedRoom = dto.getRoom() != null ? dto.getRoom().replaceAll("\\s+", "").toUpperCase() : "";
 
@@ -233,6 +244,9 @@ public class ScheduleService {
     @Transactional
     public void delete(String id) {
         findOrThrow(id);
+        if (attendanceRecordRepository.countByScheduleId(id) > 0) {
+            throw new RuntimeException("Lịch học đã có dữ liệu điểm danh, không thể xóa.");
+        }
         scheduleRepository.deleteById(id);
     }
 

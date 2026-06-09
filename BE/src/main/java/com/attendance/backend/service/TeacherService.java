@@ -187,13 +187,9 @@ public class TeacherService {
         List<String> scheduleIds = scheduleRepository.findByTeacherIdIgnoreCase(id)
                 .stream().map(s -> s.getId()).toList();
 
-        // 2. Xóa attendance records liên quan đến các schedule đó
         if (!scheduleIds.isEmpty()) {
-            attendanceRecordRepository.deleteByScheduleIdIn(scheduleIds);
+            throw new RuntimeException("Giáo viên đang có lịch dạy, không thể xóa. Vui lòng chuyển lịch dạy cho giáo viên khác hoặc sử dụng chức năng vô hiệu hóa.");
         }
-
-        // 3. Xóa schedules
-        scheduleRepository.deleteByTeacherId(id);
 
         // 4. Xóa teacher
         teacherRepository.deleteById(id);

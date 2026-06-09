@@ -42,6 +42,8 @@ public interface AttendanceRecordRepository extends JpaRepository<AttendanceReco
 
     long countByDate(LocalDate date);
 
+    long countByScheduleId(String scheduleId);
+
     @Query("SELECT COUNT(a) FROM AttendanceRecord a WHERE a.date BETWEEN :from AND :to AND a.status = :status")
     long countByDateRangeAndStatus(@Param("from") LocalDate from, @Param("to") LocalDate to, @Param("status") AttendanceRecord.AttendanceStatus status);
 

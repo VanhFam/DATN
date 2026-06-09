@@ -54,6 +54,8 @@ export function Classes() {
     });
     const getSemesterName = (semesterId) =>
         semesters.find(s => String(s.id) === String(semesterId))?.name || (semesterId ? `HK ${semesterId}` : 'Chưa chọn học kỳ');
+    const getClassStudentCount = (classId) =>
+        students.filter(s => s.classId && s.classId.split(',').map(id => id.trim()).includes(classId)).length;
 
     const filtered = classList.filter(c =>
         c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -79,13 +81,21 @@ export function Classes() {
 
     const handleSave = async (e) => {
         e.preventDefault();
+        const enrolledCount = editingClass ? getClassStudentCount(editingClass.id) : 0;
+        const maxStudents = parseInt(formData.maxStudents, 10);
+
+        if (!Number.isInteger(maxStudents) || maxStudents < Math.max(1, enrolledCount)) {
+            alert(`Sĩ số không được nhỏ hơn số sinh viên hiện tại trong lớp (${enrolledCount}).`);
+            return;
+        }
+
         setLoading(true);
 
         const dataToSave = {
             id: formData.id,
             name: formData.name,
             description: formData.description,
-            maxStudents: formData.maxStudents,
+            maxStudents,
             totalSessions: formData.totalSessions ? parseInt(formData.totalSessions) : null,
             subjectCode: formData.subjectCode.trim() || null,
             semesterId: formData.semesterId ? Number(formData.semesterId) : null,
@@ -157,6 +167,9 @@ export function Classes() {
         setShowModal(true);
     };
 
+    const editingClassStudentCount = editingClass ? getClassStudentCount(editingClass.id) : 0;
+    const maxStudentsTooLow = editingClass && Number(formData.maxStudents) < editingClassStudentCount;
+
     return (
         <div className="space-y-6 animate-fade-in">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -220,19 +233,19 @@ export function Classes() {
                             <div className="flex items-center justify-between text-sm">
                                 <span className="text-gray-500 flex items-center gap-2"><Users size={14} /> Sĩ số:</span>
                                 <div className="flex flex-col items-end gap-1">
-                                    <span className={`font-bold px-2 py-0.5 rounded-full text-xs ${students.filter(s => s.classId && s.classId.split(',').map(id => id.trim()).includes(cls.id)).length >= (cls.maxStudents || 50)
-                                            ? 'text-red-600 bg-red-50'
-                                            : 'text-emerald-600 bg-emerald-50'
+                                    <span className={`font-bold px-2 py-0.5 rounded-full text-xs ${getClassStudentCount(cls.id) >= (cls.maxStudents || 50)
+                                        ? 'text-red-600 bg-red-50'
+                                        : 'text-emerald-600 bg-emerald-50'
                                         }`}>
-                                        {students.filter(s => s.classId && s.classId.split(',').map(id => id.trim()).includes(cls.id)).length} / {cls.maxStudents || 50}
+                                        {getClassStudentCount(cls.id)} / {cls.maxStudents || 50}
                                     </span>
                                     <div className="w-24 h-1.5 bg-gray-100 rounded-full overflow-hidden">
                                         <div
-                                            className={`h-full transition-all ${students.filter(s => s.classId && s.classId.split(',').map(id => id.trim()).includes(cls.id)).length >= (cls.maxStudents || 50)
-                                                    ? 'bg-red-500'
-                                                    : 'bg-emerald-500'
+                                            className={`h-full transition-all ${getClassStudentCount(cls.id) >= (cls.maxStudents || 50)
+                                                ? 'bg-red-500'
+                                                : 'bg-emerald-500'
                                                 }`}
-                                            style={{ width: `${Math.min(100, (students.filter(s => s.classId && s.classId.split(',').map(id => id.trim()).includes(cls.id)).length / (cls.maxStudents || 50)) * 100)}%` }}
+                                            style={{ width: `${Math.min(100, (getClassStudentCount(cls.id) / (cls.maxStudents || 50)) * 100)}%` }}
                                         ></div>
                                     </div>
                                 </div>
@@ -292,7 +305,19 @@ export function Classes() {
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-sm font-bold text-gray-600 mb-2">Giới hạn sĩ số</label>
-                                        <input type="number" required className="input" value={formData.maxStudents} onChange={e => setFormData({ ...formData, maxStudents: parseInt(e.target.value) })} />
+                                        <input
+                                            type="number"
+                                            required
+                                            min={editingClass ? Math.max(1, editingClassStudentCount) : 1}
+                                            className={`input ${maxStudentsTooLow ? 'border-red-300 focus:ring-red-400' : ''}`}
+                                            value={formData.maxStudents}
+                                            onChange={e => setFormData({ ...formData, maxStudents: e.target.value })}
+                                        />
+                                        {editingClass && (
+                                            <p className={`mt-1 text-xs font-medium ${maxStudentsTooLow ? 'text-red-500' : 'text-gray-400'}`}>
+                                                Tối thiểu {editingClassStudentCount} sinh viên đang học trong lớp.
+                                            </p>
+                                        )}
                                     </div>
                                     <div>
                                         <label className="block text-sm font-bold text-gray-600 mb-2">Tổng số buổi học</label>
@@ -307,7 +332,7 @@ export function Classes() {
                             </div>
                             <div className="flex gap-3 pt-2">
                                 <button type="button" onClick={() => setShowModal(false)} className="btn-secondary flex-1 py-3 justify-center">Hủy bỏ</button>
-                                <button type="submit" className="btn-primary flex-1 py-3 flex items-center justify-center gap-2 shadow-lg shadow-indigo-100">
+                                <button type="submit" disabled={maxStudentsTooLow} className="btn-primary flex-1 py-3 flex items-center justify-center gap-2 shadow-lg shadow-indigo-100 disabled:opacity-50 disabled:cursor-not-allowed">
                                     <Check size={18} strokeWidth={3} /> {editingClass ? 'Lưu thay đổi' : 'Thêm lớp học ngay'}
                                 </button>
                             </div>
