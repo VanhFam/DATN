@@ -2,6 +2,7 @@ package com.attendance.backend.controller;
 
 import com.attendance.backend.dto.AttendanceRecordDTO;
 import com.attendance.backend.entity.AttendanceRecord;
+import com.attendance.backend.entity.Schedule;
 import com.attendance.backend.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -35,25 +36,44 @@ public class DashboardController {
         LocalDate today = LocalDate.now();
         boolean isAdmin = authentication.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN") || a.getAuthority().equals("ADMIN"));
+        String currentTeacherId = isAdmin ? null : resolveTeacherId(authentication);
         
         Map<String, Object> stats = new HashMap<>();
         
+        String todayDayOfWeek = getVietnameseDayOfWeek(today.getDayOfWeek().getValue());
+        List<Schedule> todaySchedules = isAdmin
+                ? scheduleRepository.findAll().stream()
+                        .filter(s -> s.getDayOfWeek().equalsIgnoreCase(todayDayOfWeek))
+                        .toList()
+                : scheduleRepository.findByTeacherIdIgnoreCase(currentTeacherId).stream()
+                        .filter(s -> s.getDayOfWeek().equalsIgnoreCase(todayDayOfWeek))
+                        .toList();
+        List<String> todayScheduleIds = todaySchedules.stream().map(Schedule::getId).toList();
+        List<String> todayClassIds = todaySchedules.stream().map(Schedule::getClassId).distinct().toList();
+        long todayTargetStudents = todayClassIds.isEmpty() ? 0L : studentRepository.countByClassIds(todayClassIds);
+
         if (isAdmin) {
-            // Logic cũ cho Admin - Thống kê toàn hệ thống
+            // Admin: thống kê toàn hệ thống, nhưng số liệu "hôm nay" chỉ tính các lịch đúng thứ trong ngày.
             stats.put("totalStudents", studentRepository.count());
             stats.put("totalClasses", classRoomRepository.count());
-            
-            long present = attendanceRepository.countByDateAndStatus(today, AttendanceRecord.AttendanceStatus.present);
-            long late = attendanceRepository.countByDateAndStatus(today, AttendanceRecord.AttendanceStatus.late);
-            long half = attendanceRepository.countByDateAndStatus(today, AttendanceRecord.AttendanceStatus.half);
+
+            long present = todayScheduleIds.isEmpty() ? 0L
+                    : attendanceRepository.countByDateAndScheduleIdsAndStatus(today, todayScheduleIds, AttendanceRecord.AttendanceStatus.present);
+            long late = todayScheduleIds.isEmpty() ? 0L
+                    : attendanceRepository.countByDateAndScheduleIdsAndStatus(today, todayScheduleIds, AttendanceRecord.AttendanceStatus.late);
+            long half = todayScheduleIds.isEmpty() ? 0L
+                    : attendanceRepository.countByDateAndScheduleIdsAndStatus(today, todayScheduleIds, AttendanceRecord.AttendanceStatus.half);
+            long absent = todayScheduleIds.isEmpty() ? 0L
+                    : attendanceRepository.countByDateAndScheduleIdsAndStatus(today, todayScheduleIds, AttendanceRecord.AttendanceStatus.absent);
             stats.put("todayPresent", present + late + half);
-            stats.put("todayAbsent", attendanceRepository.countByDateAndStatus(today, AttendanceRecord.AttendanceStatus.absent));
+            stats.put("todayAbsent", absent);
             stats.put("todayLate", late);
             stats.put("todayHalf", half);
-            stats.put("todayTotal", attendanceRepository.countByDate(today));
+            stats.put("todayTotal", todayScheduleIds.isEmpty() ? 0L : attendanceRepository.countByDateAndScheduleIds(today, todayScheduleIds));
+            stats.put("todayTargetStudents", todayTargetStudents);
         } else {
-            // Logic cho Giáo viên: Username chính là mã giáo viên (GV001)
-            String teacherId = authentication.getName();
+            // Logic cho Giáo viên: chỉ tính các lớp và buổi dạy được phân công.
+            String teacherId = currentTeacherId;
             
             List<String> classIds = scheduleRepository.findByTeacherIdIgnoreCase(teacherId).stream()
                     .map(com.attendance.backend.entity.Schedule::getClassId)
@@ -66,14 +86,8 @@ public class DashboardController {
             stats.put("totalStudents", studentCount);
             stats.put("totalClasses", classIds.size());
             
-            // Điểm danh hôm nay của các lớp có lịch dạy hôm nay
-            String dayOfWeekStr = getVietnameseDayOfWeek(today.getDayOfWeek().getValue());
-            List<com.attendance.backend.entity.Schedule> scheduledToday = scheduleRepository.findByTeacherIdIgnoreCase(teacherId).stream()
-                    .filter(s -> s.getDayOfWeek().equalsIgnoreCase(dayOfWeekStr))
-                    .toList();
-
             long present = 0, absent = 0, late = 0, half = 0, total = 0;
-            for (com.attendance.backend.entity.Schedule schedule : scheduledToday) {
+            for (Schedule schedule : todaySchedules) {
                 List<AttendanceRecord> daily = attendanceRepository.findValidRecordsByClassAndDateAndScheduleIds(
                         schedule.getClassId(), today, List.of(schedule.getId()));
                 present += daily.stream().filter(r -> r.getStatus() == AttendanceRecord.AttendanceStatus.present).count();
@@ -88,6 +102,7 @@ public class DashboardController {
             stats.put("todayLate", late);
             stats.put("todayHalf", half);
             stats.put("todayTotal", total);
+            stats.put("todayTargetStudents", todayTargetStudents);
         }
         
         // Weekly Data - Chỉ hiển thị những ngày có lịch dạy
@@ -97,33 +112,30 @@ public class DashboardController {
             String dayOfWeekStr = getVietnameseDayOfWeek(date.getDayOfWeek().getValue());
             
             // Kiểm tra xem ngày này có lịch dạy nào không
-            boolean hasSchedule;
+            List<Schedule> schedulesForDay;
             if (isAdmin) {
-                hasSchedule = scheduleRepository.findAll().stream()
-                                .anyMatch(s -> s.getDayOfWeek().equalsIgnoreCase(dayOfWeekStr));
+                schedulesForDay = scheduleRepository.findAll().stream()
+                        .filter(s -> s.getDayOfWeek().equalsIgnoreCase(dayOfWeekStr))
+                        .toList();
             } else {
-                String teacherId = authentication.getName();
-                hasSchedule = scheduleRepository.findByTeacherIdIgnoreCase(teacherId).stream()
-                                .anyMatch(s -> s.getDayOfWeek().equalsIgnoreCase(dayOfWeekStr));
+                schedulesForDay = scheduleRepository.findByTeacherIdIgnoreCase(currentTeacherId).stream()
+                        .filter(s -> s.getDayOfWeek().equalsIgnoreCase(dayOfWeekStr))
+                        .toList();
             }
 
             // Nếu không có lịch dạy vào ngày này, bỏ qua không hiển thị trên biểu đồ
-            if (!hasSchedule) continue;
+            if (schedulesForDay.isEmpty()) continue;
 
             long dayTotal = 0;
             double dayPresent = 0.0;
             if (isAdmin) {
-                dayTotal = attendanceRepository.countByDate(date);
-                dayPresent = attendanceRepository.countByDateAndStatus(date, AttendanceRecord.AttendanceStatus.present)
-                                + attendanceRepository.countByDateAndStatus(date, AttendanceRecord.AttendanceStatus.late) * 0.75
-                                + attendanceRepository.countByDateAndStatus(date, AttendanceRecord.AttendanceStatus.half) * 0.5;
+                List<String> scheduleIds = schedulesForDay.stream().map(Schedule::getId).toList();
+                dayTotal = attendanceRepository.countByDateAndScheduleIds(date, scheduleIds);
+                dayPresent = attendanceRepository.countByDateAndScheduleIdsAndStatus(date, scheduleIds, AttendanceRecord.AttendanceStatus.present)
+                                + attendanceRepository.countByDateAndScheduleIdsAndStatus(date, scheduleIds, AttendanceRecord.AttendanceStatus.late) * 0.75
+                                + attendanceRepository.countByDateAndScheduleIdsAndStatus(date, scheduleIds, AttendanceRecord.AttendanceStatus.half) * 0.5;
             } else {
-                String teacherId = authentication.getName();
-                List<com.attendance.backend.entity.Schedule> schedules = scheduleRepository.findByTeacherIdIgnoreCase(teacherId).stream()
-                        .filter(s -> s.getDayOfWeek().equalsIgnoreCase(dayOfWeekStr))
-                        .toList();
-                
-                for (com.attendance.backend.entity.Schedule schedule : schedules) {
+                for (Schedule schedule : schedulesForDay) {
                     List<AttendanceRecord> daily = attendanceRepository.findValidRecordsByClassAndDateAndScheduleIds(
                             schedule.getClassId(), date, List.of(schedule.getId()));
                     dayTotal += daily.size();
@@ -149,20 +161,14 @@ public class DashboardController {
         // Recent Activities
         List<AttendanceRecord> recent;
         if (isAdmin) {
-            recent = attendanceRepository.findTop10ByDateOrderByCheckInTimeDesc(today);
+            recent = todayScheduleIds.isEmpty()
+                    ? new ArrayList<>()
+                    : attendanceRepository.findTopByDateAndScheduleIdsOrderByCheckInTimeDesc(today, todayScheduleIds, PageRequest.of(0, 10));
         } else {
-            String teacherId = authentication.getName(); // Username chính là mã giáo viên
-            
-            // Lấy danh sách lớp giáo viên quản lý
-            List<String> classIds = scheduleRepository.findByTeacherIdIgnoreCase(teacherId).stream()
-                    .map(com.attendance.backend.entity.Schedule::getClassId)
-                    .distinct()
-                    .toList();
-            
-            if (classIds.isEmpty()) {
+            if (todayScheduleIds.isEmpty()) {
                 recent = new ArrayList<>();
             } else {
-                recent = attendanceRepository.findTopByClassIdInAndDateOrderByCheckInTimeDesc(classIds, today, PageRequest.of(0, 10));
+                recent = attendanceRepository.findTopByDateAndScheduleIdsOrderByCheckInTimeDesc(today, todayScheduleIds, PageRequest.of(0, 10));
             }
         }
         
@@ -190,5 +196,14 @@ public class DashboardController {
             case 7 -> "Chủ Nhật";
             default -> "Thứ 2";
         };
+    }
+
+    private String resolveTeacherId(org.springframework.security.core.Authentication authentication) {
+        String username = authentication.getName();
+        boolean hasByUsername = !scheduleRepository.findByTeacherIdIgnoreCase(username).isEmpty();
+        if (hasByUsername) return username;
+        return teacherRepository.findByUsernameOrId(username)
+                .map(com.attendance.backend.entity.Teacher::getId)
+                .orElse(username);
     }
 }

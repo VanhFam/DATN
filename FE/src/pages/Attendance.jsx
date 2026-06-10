@@ -42,6 +42,7 @@ export function Attendance({ user }) {
     const [scheduleInfo, setScheduleInfo]     = useState('');
     const [selectedScheduleId, setSelectedScheduleId] = useState('');
     const [classEnded, setClassEnded]         = useState(false);
+    const isAdmin = user?.role?.toLowerCase() === 'admin';
 
     // Refs để timer callback luôn đọc được giá trị mới nhất của state
     const attendanceRef    = useRef({});
@@ -92,7 +93,11 @@ export function Attendance({ user }) {
 
             const stats = await Promise.all(classIds.map(async (classId) => {
                 const cls = allClasses.find(c => c.id === classId);
-                const totalSessions = cls?.totalSessions || null;
+                const classSchedules = semSchedules.filter(s => String(s.classId) === String(classId));
+                const assignedSessions = classSchedules.reduce((sum, s) => sum + (Number(s.sessionsCount) || 0), 0);
+                const semesterSessionTotal = isAdmin
+                    ? (cls?.totalSessions || assignedSessions || classSchedules.length || null)
+                    : (assignedSessions || null);
 
                 // Lấy tất cả bản ghi điểm danh của lớp trong khoảng thời gian học kỳ
                 const records = await api.get(
@@ -110,12 +115,12 @@ export function Attendance({ user }) {
                     const late    = svRecords.filter(r => r.status?.toLowerCase() === 'late').length;
                     const half    = svRecords.filter(r => r.status?.toLowerCase() === 'half').length;
                     const attended = present + late * 0.75 + half * 0.5;
-                    const total    = totalSessions || svRecords.length;
+                    const total    = semesterSessionTotal || svRecords.length;
                     const pct      = total > 0 ? Math.round((attended / total) * 100) : null;
                     return { ...sv, attended, total, pct, eligible: pct !== null ? pct >= 70 : null };
                 });
 
-                return { classId, className: cls?.name || classId, totalSessions, studentStats };
+                return { classId, className: cls?.name || classId, semesterSessionTotal, studentStats };
             }));
 
             setSemesterStats(stats);
@@ -400,7 +405,7 @@ export function Attendance({ user }) {
                                 <div>
                                     <h3 className="font-bold text-gray-800">{cls.className} <span className="text-gray-400 font-mono text-sm">({cls.classId})</span></h3>
                                     <p className="text-xs text-gray-400 mt-0.5">
-                                        Tổng số buổi học: <b className="text-indigo-600">{cls.totalSessions ?? <span className="text-orange-500">Chưa thiết lập</span>}</b>
+                                        {isAdmin ? 'Tổng số buổi học' : 'Số buổi được phân công'}: <b className="text-indigo-600">{cls.semesterSessionTotal ?? <span className="text-orange-500">Chưa thiết lập</span>}</b>
                                     </p>
                                 </div>
                                 <div className="text-right text-xs text-gray-400">
@@ -413,7 +418,7 @@ export function Attendance({ user }) {
                                         <tr>
                                             <th className="px-5 py-3 text-left">Sinh viên</th>
                                             <th className="px-5 py-3 text-center">Số buổi tham dự</th>
-                                            <th className="px-5 py-3 text-center">Tổng buổi</th>
+                                            <th className="px-5 py-3 text-center">{isAdmin ? 'Tổng buổi' : 'Buổi phân công'}</th>
                                             <th className="px-5 py-3 text-center">Chuyên cần</th>
                                             <th className="px-5 py-3 text-center">Điều kiện thi</th>
                                         </tr>

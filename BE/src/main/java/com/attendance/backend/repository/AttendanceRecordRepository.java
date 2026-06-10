@@ -42,6 +42,14 @@ public interface AttendanceRecordRepository extends JpaRepository<AttendanceReco
 
     long countByDate(LocalDate date);
 
+    @Query("SELECT COUNT(a) FROM AttendanceRecord a WHERE a.date = :date AND a.scheduleId IN :scheduleIds")
+    long countByDateAndScheduleIds(@Param("date") LocalDate date, @Param("scheduleIds") List<String> scheduleIds);
+
+    @Query("SELECT COUNT(a) FROM AttendanceRecord a WHERE a.date = :date AND a.scheduleId IN :scheduleIds AND a.status = :status")
+    long countByDateAndScheduleIdsAndStatus(@Param("date") LocalDate date,
+                                            @Param("scheduleIds") List<String> scheduleIds,
+                                            @Param("status") AttendanceRecord.AttendanceStatus status);
+
     long countByScheduleId(String scheduleId);
 
     @Query("SELECT COUNT(a) FROM AttendanceRecord a WHERE a.date BETWEEN :from AND :to AND a.status = :status")
@@ -51,6 +59,11 @@ public interface AttendanceRecordRepository extends JpaRepository<AttendanceReco
     long countByDateRange(@Param("from") LocalDate from, @Param("to") LocalDate to);
 
     List<AttendanceRecord> findTop10ByDateOrderByCheckInTimeDesc(LocalDate date);
+
+    @Query("SELECT a FROM AttendanceRecord a WHERE a.date = :date AND a.scheduleId IN :scheduleIds ORDER BY a.checkInTime DESC")
+    List<AttendanceRecord> findTopByDateAndScheduleIdsOrderByCheckInTimeDesc(@Param("date") LocalDate date,
+                                                                             @Param("scheduleIds") List<String> scheduleIds,
+                                                                             org.springframework.data.domain.Pageable pageable);
 
     @Query("SELECT a FROM AttendanceRecord a WHERE a.classId IN :classIds AND a.date = :date ORDER BY a.checkInTime DESC")
     List<AttendanceRecord> findTopByClassIdInAndDateOrderByCheckInTimeDesc(@Param("classIds") java.util.List<String> classIds, @Param("date") LocalDate date, org.springframework.data.domain.Pageable pageable);

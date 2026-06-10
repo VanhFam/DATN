@@ -441,7 +441,7 @@ function EnrollmentModal({ cls, students, onClose, onUpdate }) {
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
             <div className="bg-white rounded-3xl w-full max-w-4xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-                <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-emerald-50/50">
+                <div className="shrink-0 p-6 border-b border-gray-100 flex justify-between items-center bg-emerald-50/50">
                     <div>
                         <h3 className="text-xl font-bold text-gray-800">Quản lý sĩ số: {cls.name}</h3>
                         <p className="text-xs text-emerald-600 font-bold uppercase tracking-wider">Sĩ số hiện tại: {enrolledStudents.length}</p>
@@ -449,13 +449,13 @@ function EnrollmentModal({ cls, students, onClose, onUpdate }) {
                     <button onClick={onClose} className="hover:bg-white p-2 rounded-xl transition-all shadow-sm"><X /></button>
                 </div>
 
-                <div className="flex-1 overflow-hidden grid grid-cols-1 md:grid-cols-2">
+                <div className="flex-1 min-h-0 overflow-hidden grid grid-cols-1 md:grid-cols-2">
                     {/* Danh sách hiện tại */}
-                    <div className="p-6 border-r border-gray-100 flex flex-col">
+                    <div className="min-h-0 p-6 border-r border-gray-100 flex flex-col">
                         <h4 className="font-bold text-gray-700 mb-4 flex items-center gap-2">
                             <Check className="text-emerald-500" size={18} /> Học sinh đã tham gia ({enrolledStudents.length})
                         </h4>
-                        <div className="flex-1 overflow-y-auto space-y-2 pr-2">
+                        <div className="flex-1 min-h-0 overflow-y-auto space-y-2 pr-2">
                             {enrolledStudents.map(s => (
                                 <div key={s.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-2xl group border border-transparent hover:border-emerald-100 hover:bg-emerald-50/30 transition-all">
                                     <div className="flex items-center gap-3">
@@ -479,7 +479,7 @@ function EnrollmentModal({ cls, students, onClose, onUpdate }) {
                     </div>
 
                     {/* Thêm học sinh */}
-                    <div className="p-6 bg-slate-50/30 flex flex-col">
+                    <div className="min-h-0 p-6 bg-slate-50/30 flex flex-col">
                         <h4 className="font-bold text-gray-700 mb-4 flex items-center gap-2">
                             <Plus className="text-indigo-500" size={18} /> Thêm học sinh mới
                         </h4>
@@ -493,7 +493,7 @@ function EnrollmentModal({ cls, students, onClose, onUpdate }) {
                                 onChange={e => setSearch(e.target.value)}
                             />
                         </div>
-                        <div className="flex-1 overflow-y-auto space-y-2 pr-2">
+                        <div className="flex-1 min-h-0 overflow-y-auto space-y-2 pr-2">
                             {filteredAvailable.map(s => (
                                 <div key={s.id} className="flex items-center justify-between p-3 bg-white rounded-2xl shadow-sm border border-gray-100 hover:border-indigo-200 transition-all">
                                     <div className="flex items-center gap-3">
@@ -517,7 +517,7 @@ function EnrollmentModal({ cls, students, onClose, onUpdate }) {
                     </div>
                 </div>
 
-                <div className="p-6 border-t border-gray-100 bg-slate-50 flex justify-end">
+                <div className="shrink-0 p-6 border-t border-gray-100 bg-slate-50 flex justify-end">
                     <button onClick={onClose} className="btn-primary px-8">Hoàn tất</button>
                 </div>
             </div>
