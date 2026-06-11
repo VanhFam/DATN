@@ -18,6 +18,9 @@ public interface StudentRepository extends JpaRepository<Student, String> {
 
     @Query("SELECT COUNT(s) FROM Student s JOIN s.classes c WHERE c.id = :classId")
     long countByClassId(@Param("classId") String classId);
+
+    @Query("SELECT COUNT(s) FROM Student s JOIN s.classes c WHERE c.id = :classId AND s.isActive = :isActive")
+    long countByClassIdAndIsActive(@Param("classId") String classId, @Param("isActive") Boolean isActive);
     
     List<Student> findByIsActive(Boolean isActive);
     

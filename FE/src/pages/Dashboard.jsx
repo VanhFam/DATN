@@ -71,6 +71,12 @@ export function Dashboard({ user }) {
     const maxRate = stats.weeklyStats.length ? Math.max(...stats.weeklyStats.map(d => d.rate)) : 100;
     const BAR_MAX_PX = 96; // chiều cao tối đa của thanh (px)
     const todayDenominator = stats.todayTargetStudents || stats.todayTotal || 0;
+    const todayHalf = stats.todayHalf || 0;
+    const presentOnly = Math.max(stats.todayPresent - stats.todayLate - todayHalf, 0);
+    const todayAttendanceRate = todayDenominator
+        ? Math.min(100, Math.round(((presentOnly + stats.todayLate * 0.75 + todayHalf * 0.5) / todayDenominator) * 100))
+        : 0;
+    const percentWidth = (value, total) => `${Math.min(100, total ? (value / total) * 100 : 0)}%`;
 
     return (
         <div className="space-y-8 animate-fade-in pb-10">
@@ -79,7 +85,7 @@ export function Dashboard({ user }) {
                 <StatCard title="Tổng học sinh" value={stats.totalStudents} subtitle="Đã được định danh" icon={Users} color="bg-indigo-600 shadow-indigo-100" loading={loading} />
                 <StatCard title="Tổng số môn" value={stats.totalClasses} subtitle="Đang trong học kỳ" icon={BookOpen} color="bg-blue-500 shadow-blue-100" loading={loading} />
                 <StatCard title="Có mặt hôm nay" value={stats.todayPresent} subtitle={`Mục tiêu: ${todayDenominator}`} icon={CheckCircle} color="bg-emerald-500 shadow-emerald-100" loading={loading} />
-                <StatCard title="Vắng & Muộn" value={stats.todayAbsent + stats.todayLate} subtitle="Cần lưu ý ngay" icon={Clock} color="bg-red-500 shadow-red-100" loading={loading} />
+                <StatCard title="Vắng" value={stats.todayAbsent} subtitle="Cần lưu ý ngay" icon={Clock} color="bg-red-500 shadow-red-100" loading={loading} />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -124,7 +130,7 @@ export function Dashboard({ user }) {
                             { label: 'Có mặt', value: stats.todayPresent, total: todayDenominator, color: 'bg-emerald-500' },
                             { label: 'Vắng', value: stats.todayAbsent, total: todayDenominator, color: 'bg-red-500' },
                             { label: 'Muộn', value: stats.todayLate, total: todayDenominator, color: 'bg-orange-500' },
-                            { label: 'Nửa buổi', value: stats.todayHalf || 0, total: todayDenominator, color: 'bg-indigo-500' },
+                            { label: 'Nửa buổi', value: todayHalf, total: todayDenominator, color: 'bg-indigo-500' },
                         ].map(item => (
                             <div key={item.label}>
                                 <div className="flex justify-between text-xs mb-1 font-bold">
@@ -134,7 +140,7 @@ export function Dashboard({ user }) {
                                 <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                                     <div
                                         className={`h-full rounded-full ${item.color} transition-all duration-1000`}
-                                        style={{ width: `${item.total ? (item.value / item.total) * 100 : 0}%` }}
+                                        style={{ width: percentWidth(item.value, item.total) }}
                                     />
                                 </div>
                             </div>
@@ -142,7 +148,7 @@ export function Dashboard({ user }) {
                     </div>
                     <div className="mt-6 pt-6 border-t border-gray-100">
                         <p className="text-3xl font-black text-indigo-600 text-center">
-                            {todayDenominator ? Math.round((((stats.todayPresent - stats.todayLate - (stats.todayHalf || 0)) + stats.todayLate * 0.75 + (stats.todayHalf || 0) * 0.5) / todayDenominator) * 100) : 0}%
+                            {todayAttendanceRate}%
                         </p>
                         <p className="text-[10px] font-black text-gray-400 text-center uppercase tracking-widest mt-1">Tỉ lệ đi học hôm nay</p>
                     </div>

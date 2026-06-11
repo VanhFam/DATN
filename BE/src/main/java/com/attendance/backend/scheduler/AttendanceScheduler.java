@@ -82,8 +82,9 @@ public class AttendanceScheduler {
             List<Student> students = studentRepository.findByClassIdAndIsActive(schedule.getClassId(), true);
             for (Student student : students) {
                 boolean alreadyRecorded = attendanceRepo
-                        .findByStudentIdAndDate(student.getId(), today).stream()
-                        .anyMatch(r -> schedule.getClassId().equalsIgnoreCase(r.getClassId()));
+                        .findByStudentIdAndDateAndClassIdAndScheduleId(
+                                student.getId(), today, schedule.getClassId(), schedule.getId())
+                        .isPresent();
 
                 if (!alreadyRecorded) {
                     AttendanceRecord record = AttendanceRecord.builder()

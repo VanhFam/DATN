@@ -49,8 +49,7 @@ public class DashboardController {
                         .filter(s -> s.getDayOfWeek().equalsIgnoreCase(todayDayOfWeek))
                         .toList();
         List<String> todayScheduleIds = todaySchedules.stream().map(Schedule::getId).toList();
-        List<String> todayClassIds = todaySchedules.stream().map(Schedule::getClassId).distinct().toList();
-        long todayTargetStudents = todayClassIds.isEmpty() ? 0L : studentRepository.countByClassIds(todayClassIds);
+        long todayTargetStudents = countAttendanceSlots(todaySchedules);
 
         if (isAdmin) {
             // Admin: thống kê toàn hệ thống, nhưng số liệu "hôm nay" chỉ tính các lịch đúng thứ trong ngày.
@@ -205,5 +204,11 @@ public class DashboardController {
         return teacherRepository.findByUsernameOrId(username)
                 .map(com.attendance.backend.entity.Teacher::getId)
                 .orElse(username);
+    }
+
+    private long countAttendanceSlots(List<Schedule> schedules) {
+        return schedules.stream()
+                .mapToLong(schedule -> studentRepository.countByClassIdAndIsActive(schedule.getClassId(), true))
+                .sum();
     }
 }

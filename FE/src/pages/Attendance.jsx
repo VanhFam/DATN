@@ -76,6 +76,9 @@ export function Attendance({ user }) {
         return (active || schedules[0]).id;
     };
 
+    const recordMatchesSchedule = (record, scheduleId) =>
+        !scheduleId || !record.scheduleId || String(record.scheduleId) === String(scheduleId);
+
     const loadSemesterStats = async (semId) => {
         if (!semId) return;
         const sem = semesters.find(s => String(s.id) === String(semId));
@@ -177,7 +180,7 @@ export function Attendance({ user }) {
 
         const finalMap = {};
         students.forEach(s => {
-            if (meta[s.id]?.method !== 'face_id') {
+            if (!meta[s.id]?.method) {
                 finalMap[s.id] = att[s.id] || 'absent';
             }
         });
@@ -237,13 +240,12 @@ export function Attendance({ user }) {
                     setClassEnded(true);
                     autoSavedRef.current = true; // chặn doAutoSave gọi lại
 
+                    const recordsForSchedule = attendanceRes.filter(r => recordMatchesSchedule(r, currentScheduleId));
                     const finalMap = {};
                     studentsRes.forEach(s => {
-                        const existing = attendanceRes.find(r => r.studentId === s.id);
-                        if (!existing || existing.method?.toLowerCase() !== 'face_id') {
-                            // Dùng status đang có (có thể đã chỉnh thủ công trước đó)
-                            const currentStatus = attendanceRes.find(r => r.studentId === s.id)?.status?.toLowerCase();
-                            finalMap[s.id] = currentStatus || 'absent';
+                        const existing = recordsForSchedule.find(r => r.studentId === s.id);
+                        if (!existing) {
+                            finalMap[s.id] = 'absent';
                         }
                     });
 
@@ -281,15 +283,20 @@ export function Attendance({ user }) {
 
             setClassStudents(studentsRes);
 
+            const recordsForSchedule = currentScheduleId
+                ? attendanceRes.filter(r => recordMatchesSchedule(r, currentScheduleId))
+                : attendanceRes;
+
             const records = {};
             const meta    = {};
             studentsRes.forEach(s => { records[s.id] = 'absent'; });
-            attendanceRes.forEach(r => {
+            recordsForSchedule.forEach(r => {
                 records[r.studentId] = r.status.toLowerCase();
                 meta[r.studentId]    = {
                     method:      r.method?.toLowerCase(),
                     checkInTime: r.checkInTime,
-                    note:        r.note
+                    note:        r.note,
+                    scheduleId:  r.scheduleId
                 };
             });
 
@@ -298,7 +305,7 @@ export function Attendance({ user }) {
             setAttendanceMeta(meta);
 
             const allSaved = studentsRes.length > 0 &&
-                studentsRes.every(s => attendanceRes.some(r => r.studentId === s.id));
+                studentsRes.every(s => recordsForSchedule.some(r => r.studentId === s.id));
             setSaved(allSaved && !isHistory);
         } catch (err) {
             console.error('Failed to fetch attendance:', err);

@@ -254,24 +254,7 @@ public class AttendanceService {
             }
 
             record.setStatus(status);
-            
-            // Logic mới: Tự động tính trạng thái dựa trên thời gian nếu GV chọn 'present'
             if (status == AttendanceRecord.AttendanceStatus.present) {
-                com.attendance.backend.entity.Schedule sched = daySchedules.stream()
-                        .filter(s -> s.getId().equals(resolvedScheduleId))
-                        .findFirst().orElse(null);
-                if (sched != null) {
-                    LocalTime startTime = LocalTime.parse(sched.getStartTime(), TIME_FORMATTER);
-                    LocalTime nowTime = LocalTime.now(zoneId);
-                    
-                    if (nowTime.isAfter(startTime.plusMinutes(30))) {
-                        record.setStatus(AttendanceRecord.AttendanceStatus.half);
-                        record.setNote("Ghi nhận sau 30p - Tính nửa buổi");
-                    } else if (nowTime.isAfter(startTime.plusMinutes(15))) {
-                        record.setStatus(AttendanceRecord.AttendanceStatus.late);
-                        record.setNote("Ghi nhận sau 15p - Tính muộn");
-                    }
-                }
                 record.setCheckInTime(LocalTime.now(zoneId));
             }
             record.setScheduleId(resolvedScheduleId);
